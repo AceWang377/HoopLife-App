@@ -134,6 +134,7 @@ struct FloatingDock: View {
         HStack(spacing: 6) {
             ForEach(AppTab.allCases, id: \.self) { tab in
                 Button {
+                    HLHaptics.selection()
                     withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
                         selectedTab = tab
                     }

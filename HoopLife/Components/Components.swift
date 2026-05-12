@@ -1,4 +1,19 @@
 import SwiftUI
+import UIKit
+
+enum HLHaptics {
+    static func selection() {
+        UISelectionFeedbackGenerator().selectionChanged()
+    }
+
+    static func light() {
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    static func medium() {
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    }
+}
 
 struct FactChip: View {
     let label: String
@@ -40,7 +55,10 @@ struct SelectableChip: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            HLHaptics.selection()
+            action()
+        } label: {
             Text(label)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(isSelected ? HLColor.night : HLColor.text)
@@ -109,7 +127,10 @@ struct CourtCard: View {
                         .lineLimit(1)
                 }
                 Spacer()
-                Button(action: onSave) {
+                Button {
+                    HLHaptics.selection()
+                    onSave()
+                } label: {
                     Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                         .font(.headline)
                         .foregroundStyle(isSaved ? HLColor.basketballOrange : HLColor.secondaryText)

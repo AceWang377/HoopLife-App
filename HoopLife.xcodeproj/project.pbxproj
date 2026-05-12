@@ -48,7 +48,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		AA0000010000000000000200 /* Frameworks */ = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		AA0000010000000000000200 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -74,12 +80,64 @@
 			path = HoopLife;
 			sourceTree = "<group>";
 		};
-		AA0000010000000000000302 /* Products */ = {isa = PBXGroup; children = (AA00000100000000000000F0 /* HoopLife.app */,); name = Products; sourceTree = "<group>"; };
-		AA0000010000000000000310 /* Models */ = {isa = PBXGroup; children = (AA0000010000000000000102 /* Court.swift */, AA0000010000000000000103 /* AppStore.swift */,); path = Models; sourceTree = "<group>"; };
-		AA0000010000000000000311 /* Data */ = {isa = PBXGroup; children = (AA0000010000000000000104 /* CourtSeedStore.swift */,); path = Data; sourceTree = "<group>"; };
-		AA0000010000000000000312 /* Components */ = {isa = PBXGroup; children = (AA0000010000000000000105 /* Theme.swift */, AA0000010000000000000106 /* Components.swift */,); path = Components; sourceTree = "<group>"; };
-		AA0000010000000000000313 /* Views */ = {isa = PBXGroup; children = (AA0000010000000000000107 /* RootView.swift */, AA0000010000000000000108 /* OnboardingView.swift */, AA0000010000000000000109 /* CourtMapView.swift */, AA000001000000000000010A /* FilterSheetView.swift */, AA000001000000000000010B /* CourtDetailView.swift */, AA000001000000000000010C /* SuggestEditView.swift */, AA000001000000000000010D /* AddCourtView.swift */, AA000001000000000000010E /* SavedCourtsView.swift */, AA000001000000000000010F /* AboutDataView.swift */,); path = Views; sourceTree = "<group>"; };
-		AA0000010000000000000314 /* Resources */ = {isa = PBXGroup; children = (AA0000010000000000000110 /* CourtsSeed.json */,); path = Resources; sourceTree = "<group>"; };
+		AA0000010000000000000302 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AA00000100000000000000F0 /* HoopLife.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AA0000010000000000000310 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000010000000000000102 /* Court.swift */,
+				AA0000010000000000000103 /* AppStore.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		AA0000010000000000000311 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000010000000000000104 /* CourtSeedStore.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
+		AA0000010000000000000312 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000010000000000000105 /* Theme.swift */,
+				AA0000010000000000000106 /* Components.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		AA0000010000000000000313 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000010000000000000107 /* RootView.swift */,
+				AA0000010000000000000108 /* OnboardingView.swift */,
+				AA0000010000000000000109 /* CourtMapView.swift */,
+				AA000001000000000000010A /* FilterSheetView.swift */,
+				AA000001000000000000010B /* CourtDetailView.swift */,
+				AA000001000000000000010C /* SuggestEditView.swift */,
+				AA000001000000000000010D /* AddCourtView.swift */,
+				AA000001000000000000010E /* SavedCourtsView.swift */,
+				AA000001000000000000010F /* AboutDataView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		AA0000010000000000000314 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				AA0000010000000000000110 /* CourtsSeed.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -91,8 +149,10 @@
 				AA0000010000000000000200 /* Frameworks */,
 				AA0000010000000000000402 /* Resources */,
 			);
-			buildRules = ();
-			dependencies = ();
+			buildRules = (
+			);
+			dependencies = (
+			);
 			name = HoopLife;
 			productName = HoopLife;
 			productReference = AA00000100000000000000F0 /* HoopLife.app */;
@@ -117,21 +177,55 @@
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
-			knownRegions = (en, Base,);
+			knownRegions = (
+				en,
+				Base,
+			);
 			mainGroup = AA0000010000000000000300;
 			productRefGroup = AA0000010000000000000302 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (AA0000010000000000000400 /* HoopLife */,);
+			targets = (
+				AA0000010000000000000400 /* HoopLife */,
+			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		AA0000010000000000000402 /* Resources */ = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (AA0000010000000000000010 /* CourtsSeed.json in Resources */, AA0000010000000000000011 /* Assets.xcassets in Resources */,); runOnlyForDeploymentPostprocessing = 0; };
+		AA0000010000000000000402 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0000010000000000000010 /* CourtsSeed.json in Resources */,
+				AA0000010000000000000011 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		AA0000010000000000000401 /* Sources */ = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (AA0000010000000000000001 /* HoopLifeApp.swift in Sources */, AA0000010000000000000002 /* Court.swift in Sources */, AA0000010000000000000003 /* AppStore.swift in Sources */, AA0000010000000000000004 /* CourtSeedStore.swift in Sources */, AA0000010000000000000005 /* Theme.swift in Sources */, AA0000010000000000000006 /* Components.swift in Sources */, AA0000010000000000000007 /* RootView.swift in Sources */, AA0000010000000000000008 /* OnboardingView.swift in Sources */, AA0000010000000000000009 /* CourtMapView.swift in Sources */, AA000001000000000000000A /* FilterSheetView.swift in Sources */, AA000001000000000000000B /* CourtDetailView.swift in Sources */, AA000001000000000000000C /* SuggestEditView.swift in Sources */, AA000001000000000000000D /* AddCourtView.swift in Sources */, AA000001000000000000000E /* SavedCourtsView.swift in Sources */, AA000001000000000000000F /* AboutDataView.swift in Sources */,); runOnlyForDeploymentPostprocessing = 0; };
+		AA0000010000000000000401 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AA0000010000000000000001 /* HoopLifeApp.swift in Sources */,
+				AA0000010000000000000002 /* Court.swift in Sources */,
+				AA0000010000000000000003 /* AppStore.swift in Sources */,
+				AA0000010000000000000004 /* CourtSeedStore.swift in Sources */,
+				AA0000010000000000000005 /* Theme.swift in Sources */,
+				AA0000010000000000000006 /* Components.swift in Sources */,
+				AA0000010000000000000007 /* RootView.swift in Sources */,
+				AA0000010000000000000008 /* OnboardingView.swift in Sources */,
+				AA0000010000000000000009 /* CourtMapView.swift in Sources */,
+				AA000001000000000000000A /* FilterSheetView.swift in Sources */,
+				AA000001000000000000000B /* CourtDetailView.swift in Sources */,
+				AA000001000000000000000C /* SuggestEditView.swift in Sources */,
+				AA000001000000000000000D /* AddCourtView.swift in Sources */,
+				AA000001000000000000000E /* SavedCourtsView.swift in Sources */,
+				AA000001000000000000000F /* AboutDataView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
@@ -148,13 +242,14 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HoopLife uses your location to show nearby courts and distance.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_ImageName = HoopLifeSplashMark;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.acewang.hooplife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -171,13 +266,14 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HoopLife uses your location to show nearby courts and distance.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_ImageName = HoopLifeSplashMark;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.acewang.hooplife;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -222,7 +318,10 @@
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)");
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -295,8 +394,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA0000010000000000000500 /* Build configuration list for PBXNativeTarget "HoopLife" */ = {isa = XCConfigurationList; buildConfigurations = (AA0000010000000000000700 /* Debug */, AA0000010000000000000701 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		AA0000010000000000000501 /* Build configuration list for PBXProject "HoopLife" */ = {isa = XCConfigurationList; buildConfigurations = (AA0000010000000000000702 /* Debug */, AA0000010000000000000703 /* Release */,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		AA0000010000000000000500 /* Build configuration list for PBXNativeTarget "HoopLife" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000010000000000000700 /* Debug */,
+				AA0000010000000000000701 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0000010000000000000501 /* Build configuration list for PBXProject "HoopLife" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000010000000000000702 /* Debug */,
+				AA0000010000000000000703 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 	};
 	rootObject = AA0000010000000000000600 /* Project object */;

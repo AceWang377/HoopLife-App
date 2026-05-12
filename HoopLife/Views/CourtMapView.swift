@@ -13,6 +13,7 @@ struct CourtMapView: View {
     @State private var showingFilters = false
     @State private var showingDetail = false
     @State private var showingSuggestion = false
+    @FocusState private var isSearchFocused: Bool
 
     private var visibleCourts: [Court] {
         let filtered = store.filteredCourts
@@ -29,8 +30,10 @@ struct CourtMapView: View {
                 ForEach(visibleCourts) { court in
                     Annotation("", coordinate: court.coordinate) {
                         Button {
+                            HLHaptics.selection()
                             withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
                                 store.selectedCourt = court
+                                focusMap(on: court)
                             }
                         } label: {
                             CourtPin(court: court, isSelected: store.selectedCourt?.id == court.id)
@@ -84,6 +87,7 @@ struct CourtMapView: View {
                 brandPill
                 Spacer()
                 Button {
+                    HLHaptics.light()
                     showingFilters = true
                 } label: {
                     Image(systemName: "slider.horizontal.3")
@@ -137,9 +141,16 @@ struct CourtMapView: View {
                 .disableAutocorrection(true)
                 .foregroundStyle(.white)
                 .tint(HLColor.freshGreen)
+                .focused($isSearchFocused)
+                .submitLabel(.search)
+                .onSubmit {
+                    selectFirstVisibleCourt()
+                }
             if !searchText.isEmpty {
                 Button {
+                    HLHaptics.light()
                     searchText = ""
+                    store.selectedCourt = nil
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundStyle(.white.opacity(0.72))
@@ -160,13 +171,13 @@ struct CourtMapView: View {
     private var filterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                MapFilterChip(label: "Outdoor", isSelected: store.filters.outdoor) { store.filters.outdoor.toggle() }
-                MapFilterChip(label: "Indoor", isSelected: store.filters.indoor) { store.filters.indoor.toggle() }
-                MapFilterChip(label: "Free", isSelected: store.filters.free) { store.filters.free.toggle() }
-                MapFilterChip(label: "Lights", isSelected: store.filters.lights) { store.filters.lights.toggle() }
-                MapFilterChip(label: "Dry", isSelected: store.filters.dryAfterRain) { store.filters.dryAfterRain.toggle() }
-                MapFilterChip(label: "Nets", isSelected: store.filters.nets) { store.filters.nets.toggle() }
-                MapFilterChip(label: "Standard rim", isSelected: store.filters.standardRim) { store.filters.standardRim.toggle() }
+                MapFilterChip(label: "Outdoor", isSelected: store.filters.outdoor) { toggleFilter { store.filters.outdoor.toggle() } }
+                MapFilterChip(label: "Indoor", isSelected: store.filters.indoor) { toggleFilter { store.filters.indoor.toggle() } }
+                MapFilterChip(label: "Free", isSelected: store.filters.free) { toggleFilter { store.filters.free.toggle() } }
+                MapFilterChip(label: "Lights", isSelected: store.filters.lights) { toggleFilter { store.filters.lights.toggle() } }
+                MapFilterChip(label: "Dry", isSelected: store.filters.dryAfterRain) { toggleFilter { store.filters.dryAfterRain.toggle() } }
+                MapFilterChip(label: "Nets", isSelected: store.filters.nets) { toggleFilter { store.filters.nets.toggle() } }
+                MapFilterChip(label: "Standard rim", isSelected: store.filters.standardRim) { toggleFilter { store.filters.standardRim.toggle() } }
             }
             .padding(.trailing, 20)
         }
@@ -208,6 +219,7 @@ struct CourtMapView: View {
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(.white.opacity(0.64))
                     Button("Reset filters") {
+                        HLHaptics.medium()
                         store.filters = CourtFilters()
                     }
                     .buttonStyle(DarkSecondaryButtonStyle())
@@ -224,8 +236,10 @@ struct CourtMapView: View {
                             }
                             .frame(width: 304)
                             .onTapGesture {
+                                HLHaptics.selection()
                                 withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
                                     store.selectedCourt = court
+                                    focusMap(on: court)
                                 }
                             }
                         }
@@ -259,6 +273,7 @@ struct CourtMapView: View {
                 }
                 Spacer()
                 Button {
+                    HLHaptics.light()
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.86)) {
                         store.selectedCourt = nil
                     }
@@ -285,11 +300,13 @@ struct CourtMapView: View {
 
             HStack(spacing: 10) {
                 Button("Directions") {
+                    HLHaptics.medium()
                     openDirections(to: court)
                 }
                 .buttonStyle(DarkPrimaryButtonStyle())
 
                 Button("Details") {
+                    HLHaptics.light()
                     showingDetail = true
                 }
                 .buttonStyle(DarkSecondaryButtonStyle())
@@ -319,6 +336,36 @@ struct CourtMapView: View {
         let item = MKMapItem(placemark: MKPlacemark(coordinate: court.coordinate))
         item.name = court.name
         item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking])
+    }
+
+    private func toggleFilter(_ update: () -> Void) {
+        HLHaptics.selection()
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            update()
+            store.selectedCourt = nil
+        }
+    }
+
+    private func selectFirstVisibleCourt() {
+        guard let court = visibleCourts.first else {
+            HLHaptics.light()
+            return
+        }
+        HLHaptics.selection()
+        isSearchFocused = false
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
+            store.selectedCourt = court
+            focusMap(on: court)
+        }
+    }
+
+    private func focusMap(on court: Court) {
+        cameraPosition = .region(
+            MKCoordinateRegion(
+                center: court.coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.028, longitudeDelta: 0.028)
+            )
+        )
     }
 }
 
