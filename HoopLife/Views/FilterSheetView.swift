@@ -11,9 +11,10 @@ struct FilterSheetView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Filters")
                             .font(.system(size: 36, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
                         Text("Choose the court facts that matter.")
                             .font(.subheadline.weight(.medium))
-                            .foregroundStyle(HLColor.secondaryText)
+                            .foregroundStyle(.white.opacity(0.66))
                     }
 
                     filterSection("Court type") {
@@ -60,7 +61,7 @@ struct FilterSheetView: View {
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .padding(20)
-                .background(.regularMaterial)
+                .background(.black.opacity(0.72))
             }
         }
     }
@@ -69,6 +70,7 @@ struct FilterSheetView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(title)
                 .font(.headline.weight(.bold))
+                .foregroundStyle(.white)
             FlowLayout(spacing: 10) {
                 content()
             }

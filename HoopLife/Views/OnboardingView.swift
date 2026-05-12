@@ -335,10 +335,10 @@ struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline.weight(.semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(HLColor.night)
             .frame(maxWidth: .infinity)
             .frame(height: 54)
-            .background(HLColor.electricBlue.opacity(configuration.isPressed ? 0.8 : 1))
+            .background(HLColor.freshGreen.opacity(configuration.isPressed ? 0.82 : 1))
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }
@@ -347,14 +347,14 @@ struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.headline.weight(.semibold))
-            .foregroundStyle(HLColor.text)
+            .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .frame(height: 54)
-            .background(Color.white.opacity(configuration.isPressed ? 0.72 : 1))
+            .background(.white.opacity(configuration.isPressed ? 0.10 : 0.16))
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(HLColor.stroke, lineWidth: 1)
+                    .stroke(.white.opacity(0.20), lineWidth: 1)
             }
     }
 }

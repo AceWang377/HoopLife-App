@@ -15,12 +15,13 @@ enum HLColor {
     static let verified = Color(red: 0.12, green: 0.58, blue: 0.31)
     static let warning = Color(red: 0.82, green: 0.49, blue: 0.0)
     static let imported = Color(red: 0.50, green: 0.52, blue: 0.50)
-    static let card = Color.white.opacity(0.94)
+    static let card = Color.black.opacity(0.58)
     static let softBlue = Color(red: 0.88, green: 0.925, blue: 1.0)
     static let softGreen = Color(red: 0.89, green: 0.97, blue: 0.86)
     static let softWarning = Color(red: 1.0, green: 0.94, blue: 0.80)
     static let stroke = Color(red: 0.83, green: 0.84, blue: 0.80)
     static let glass = Color.white.opacity(0.82)
+    static let darkText = Color(red: 0.075, green: 0.078, blue: 0.071)
 }
 
 extension View {
@@ -28,13 +29,20 @@ extension View {
         self
             .background(HLColor.card)
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
-            .shadow(color: .black.opacity(0.10), radius: 22, y: 10)
+            .overlay {
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .stroke(.white.opacity(0.12), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.28), radius: 22, y: 10)
     }
 
     func pageBackground() -> some View {
         self.background(
             LinearGradient(
-                colors: [Color(red: 0.965, green: 0.968, blue: 0.95), Color(red: 0.90, green: 0.94, blue: 0.91)],
+                colors: [
+                    Color(red: 0.026, green: 0.055, blue: 0.044),
+                    Color(red: 0.015, green: 0.023, blue: 0.020)
+                ],
                 startPoint: .top,
                 endPoint: .bottom
             )

@@ -56,6 +56,8 @@ struct AdminCourtEditorView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(HLColor.background)
         .navigationTitle("Admin editor")
         .safeAreaInset(edge: .bottom) {
             Color.clear.frame(height: 96)
@@ -175,6 +177,8 @@ struct AdminCourtFormView: View {
                 }
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(HLColor.background)
         .navigationTitle(navigationTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

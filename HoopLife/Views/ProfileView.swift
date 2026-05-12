@@ -28,9 +28,10 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Profile")
                 .font(.system(size: 38, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
             Text("Browse courts without an account. Saved courts stay local to this device for the MVP.")
                 .font(.body.weight(.medium))
-                .foregroundStyle(HLColor.secondaryText)
+                .foregroundStyle(.white.opacity(0.66))
         }
     }
 
@@ -73,16 +74,16 @@ struct ProfileView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Court source")
                             .font(.headline.weight(.bold))
-                            .foregroundStyle(HLColor.text)
+                            .foregroundStyle(.white)
                         Text(store.isLoadingRemoteCourts ? "Syncing courts..." : store.courtDataSource)
                             .font(.caption.weight(.medium))
-                            .foregroundStyle(HLColor.secondaryText)
+                            .foregroundStyle(.white.opacity(0.58))
                     }
 
                     Spacer()
                 }
                 .padding(14)
-                .background(Color.white.opacity(0.70))
+                .background(.white.opacity(0.09))
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 ProfileLink(title: "Terms and privacy", subtitle: "Simple MVP terms", icon: "doc.text.fill") {
                     TermsView()
@@ -111,13 +112,14 @@ struct ProfileView: View {
                 } else {
                     Text("Hidden owner tool for adding Google Maps checked courts and updating verified facts before a backend exists.")
                         .font(.subheadline.weight(.medium))
-                        .foregroundStyle(HLColor.secondaryText)
+                        .foregroundStyle(.white.opacity(0.62))
 
                     SecureField("Admin passcode", text: $passcode)
                         .textInputAutocapitalization(.characters)
                         .disableAutocorrection(true)
                         .padding(14)
-                        .background(Color.white.opacity(0.94))
+                        .foregroundStyle(.white)
+                        .background(.white.opacity(0.10))
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .overlay {
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -152,10 +154,10 @@ struct StatTile: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(value)
                 .font(.title.weight(.black))
-                .foregroundStyle(HLColor.text)
+                .foregroundStyle(.white)
             Text(label)
                 .font(.caption.weight(.bold))
-                .foregroundStyle(HLColor.secondaryText)
+                .foregroundStyle(.white.opacity(0.58))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -184,20 +186,20 @@ struct ProfileLink<Destination: View>: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
                         .font(.headline.weight(.bold))
-                        .foregroundStyle(HLColor.text)
+                        .foregroundStyle(.white)
                     Text(subtitle)
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(HLColor.secondaryText)
+                        .foregroundStyle(.white.opacity(0.58))
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
                     .font(.caption.weight(.black))
-                    .foregroundStyle(HLColor.mutedText)
+                    .foregroundStyle(.white.opacity(0.42))
             }
             .padding(14)
-            .background(Color.white.opacity(0.70))
+            .background(.white.opacity(0.09))
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
@@ -210,25 +212,26 @@ struct TermsView: View {
             VStack(alignment: .leading, spacing: 18) {
                 Text("Terms and privacy")
                     .font(.system(size: 34, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
 
                 SectionCard(title: "MVP promise") {
                     Text("HoopLife shows practical court facts without requiring a public account. Saved courts and owner-only admin edits are stored on this device in the current MVP.")
-                        .foregroundStyle(HLColor.secondaryText)
+                        .foregroundStyle(.white.opacity(0.62))
                 }
 
                 SectionCard(title: "Court data") {
                     Text("Imported OpenStreetMap records are starting points and may be incomplete. Manual HoopLife checks should be used before marking a court verified.")
-                        .foregroundStyle(HLColor.secondaryText)
+                        .foregroundStyle(.white.opacity(0.62))
                 }
 
                 SectionCard(title: "OpenStreetMap attribution") {
                     Text("Contains information from OpenStreetMap contributors, available under the Open Database License.")
-                        .foregroundStyle(HLColor.secondaryText)
+                        .foregroundStyle(.white.opacity(0.62))
                 }
 
                 SectionCard(title: "Contributions") {
                     Text("Public user submissions are planned for a later backend version. The current build keeps browsing open and uses owner-reviewed data only.")
-                        .foregroundStyle(HLColor.secondaryText)
+                        .foregroundStyle(.white.opacity(0.62))
                 }
             }
             .padding(20)

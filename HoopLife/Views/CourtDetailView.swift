@@ -42,7 +42,7 @@ struct CourtDetailView: View {
                     .buttonStyle(PrimaryButtonStyle())
                 }
                 .padding(20)
-                .background(.regularMaterial)
+                .background(.black.opacity(0.72))
             }
         }
     }
@@ -76,10 +76,10 @@ struct CourtDetailView: View {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(court.name)
                         .font(.system(size: 34, weight: .black, design: .rounded))
-                        .foregroundStyle(HLColor.text)
+                        .foregroundStyle(.white)
                     Text(court.area)
                         .font(.body.weight(.medium))
-                        .foregroundStyle(HLColor.secondaryText)
+                        .foregroundStyle(.white.opacity(0.62))
                 }
                 Spacer()
                 Button {
@@ -89,7 +89,7 @@ struct CourtDetailView: View {
                         .font(.title3)
                         .foregroundStyle(store.isSaved(court) ? HLColor.basketballOrange : HLColor.secondaryText)
                         .padding(10)
-                        .background(.white)
+                        .background(.white.opacity(0.12))
                         .clipShape(Circle())
                 }
             }
@@ -156,7 +156,7 @@ struct CourtDetailView: View {
             FactRow(title: "Checked", value: court.lastCheckedAt)
             Text(court.notes)
                 .font(.footnote)
-                .foregroundStyle(HLColor.secondaryText)
+                .foregroundStyle(.white.opacity(0.58))
         }
     }
 

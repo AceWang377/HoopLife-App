@@ -24,9 +24,10 @@ struct AddCourtView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Add a court")
                             .font(.system(size: 38, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
                         Text("Tap the map to place a candidate. New courts stay pending until reviewed.")
                             .font(.body.weight(.medium))
-                            .foregroundStyle(HLColor.secondaryText)
+                            .foregroundStyle(.white.opacity(0.66))
                     }
 
                     MapReader { proxy in
@@ -65,6 +66,7 @@ struct AddCourtView: View {
 
                             Text("Court type")
                                 .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white)
                             FlowLayout(spacing: 10) {
                                 SelectableChip(label: "Outdoor", isSelected: type == .outdoor) { type = .outdoor }
                                 SelectableChip(label: "Indoor", isSelected: type == .indoor) { type = .indoor }
@@ -103,7 +105,7 @@ struct AddCourtView: View {
                 .buttonStyle(PrimaryButtonStyle())
                 .padding(20)
                 .padding(.bottom, 76)
-                .background(.regularMaterial)
+                .background(.black.opacity(0.72))
             }
         }
     }
@@ -112,10 +114,11 @@ struct AddCourtView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.84))
             TextField(placeholder, text: text)
                 .padding(14)
-                .foregroundStyle(HLColor.text)
-                .background(Color.white.opacity(0.94))
+                .foregroundStyle(.white)
+                .background(.white.opacity(0.10))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)

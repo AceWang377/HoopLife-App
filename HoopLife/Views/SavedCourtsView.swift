@@ -11,9 +11,10 @@ struct SavedCourtsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Saved courts")
                             .font(.system(size: 38, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
                         Text("Quickly check your regular spots. Saved courts stay on this device in v1.")
                             .font(.body.weight(.medium))
-                            .foregroundStyle(HLColor.secondaryText)
+                            .foregroundStyle(.white.opacity(0.66))
                     }
 
                     if store.savedCourts.isEmpty {
@@ -46,8 +47,9 @@ struct SavedCourtsView: View {
                 .foregroundStyle(HLColor.electricBlue)
             Text("Save courts you want to check again.")
                 .font(.title2.weight(.black))
+                .foregroundStyle(.white)
             Text("No account needed. Your list is local to this device for the MVP.")
-                .foregroundStyle(HLColor.secondaryText)
+                .foregroundStyle(.white.opacity(0.62))
         }
         .padding(22)
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -19,8 +19,9 @@ struct SuggestEditView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     Text(court.name)
                         .font(.title.weight(.bold))
+                        .foregroundStyle(.white)
                     Text("Help make this court more accurate. Suggestions are reviewed before they become verified.")
-                        .foregroundStyle(HLColor.secondaryText)
+                        .foregroundStyle(.white.opacity(0.66))
 
                     SectionCard(title: "What do you want to update?") {
                         FlowLayout(spacing: 10) {
@@ -46,7 +47,8 @@ struct SuggestEditView: View {
                         TextField("e.g. left hoop has no net", text: $note, axis: .vertical)
                             .lineLimit(3...5)
                             .padding(14)
-                            .background(HLColor.background)
+                            .foregroundStyle(.white)
+                            .background(.white.opacity(0.10))
                             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
 
@@ -62,7 +64,7 @@ struct SuggestEditView: View {
                 }
                 .padding(20)
             }
-            .background(HLColor.background)
+            .pageBackground()
             .navigationTitle("Suggest edit")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -77,7 +79,7 @@ struct SuggestEditView: View {
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .padding(20)
-                .background(.regularMaterial)
+                .background(.black.opacity(0.72))
             }
         }
     }

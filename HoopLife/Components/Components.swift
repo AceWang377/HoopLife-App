@@ -44,7 +44,7 @@ struct FactChip: View {
         case .positive: HLColor.courtGreen
         case .warning: Color(red: 0.604, green: 0.396, blue: 0.0)
         case .unknown: HLColor.secondaryText
-        case .neutral: HLColor.text
+        case .neutral: HLColor.darkText
         }
     }
 }
@@ -61,14 +61,14 @@ struct SelectableChip: View {
         } label: {
             Text(label)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(isSelected ? HLColor.night : HLColor.text)
+                .foregroundStyle(isSelected ? HLColor.night : .white.opacity(0.82))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(isSelected ? HLColor.freshGreen : Color(red: 0.78, green: 0.88, blue: 0.83))
+                .background(isSelected ? HLColor.freshGreen : .white.opacity(0.12))
                 .clipShape(Capsule())
                 .overlay {
                     Capsule()
-                        .stroke(isSelected ? HLColor.freshGreen.opacity(0.7) : Color(red: 0.48, green: 0.62, blue: 0.56).opacity(0.55), lineWidth: 1)
+                        .stroke(isSelected ? HLColor.freshGreen.opacity(0.7) : .white.opacity(0.16), lineWidth: 1)
                 }
         }
         .buttonStyle(.plain)
@@ -102,7 +102,7 @@ struct ConfidenceBadge: View {
         case .verified, .recentlyChecked: HLColor.courtGreen
         case .needsCheck: Color(red: 0.604, green: 0.396, blue: 0.0)
         case .userSuggested: HLColor.electricBlue
-        case .imported: HLColor.secondaryText
+        case .imported: HLColor.darkText.opacity(0.72)
         }
     }
 }
@@ -119,11 +119,11 @@ struct CourtCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(court.name)
                         .font(.headline.weight(.semibold))
-                        .foregroundStyle(HLColor.text)
+                        .foregroundStyle(.white)
                         .lineLimit(1)
                     Text(court.area)
                         .font(.subheadline)
-                        .foregroundStyle(HLColor.secondaryText)
+                        .foregroundStyle(.white.opacity(0.62))
                         .lineLimit(1)
                 }
                 Spacer()
@@ -133,7 +133,7 @@ struct CourtCard: View {
                 } label: {
                     Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
                         .font(.headline)
-                        .foregroundStyle(isSaved ? HLColor.basketballOrange : HLColor.secondaryText)
+                        .foregroundStyle(isSaved ? HLColor.basketballOrange : .white.opacity(0.68))
                 }
                 .buttonStyle(.plain)
             }
@@ -151,18 +151,18 @@ struct CourtCard: View {
                 Spacer()
                 Label(court.area, systemImage: "location")
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(HLColor.secondaryText)
+                    .foregroundStyle(.white.opacity(0.58))
                     .lineLimit(1)
             }
         }
         .padding(16)
-        .background(.white.opacity(0.92))
+        .background(.black.opacity(0.58))
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(.white.opacity(0.55), lineWidth: 1)
+                .stroke(.white.opacity(0.13), lineWidth: 1)
         }
-        .shadow(color: .black.opacity(0.12), radius: 20, y: 8)
+        .shadow(color: .black.opacity(0.24), radius: 20, y: 8)
     }
 
     private var courtBadge: some View {
@@ -193,11 +193,11 @@ struct FactRow: View {
                 }
             Text(title)
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(HLColor.text)
+                .foregroundStyle(.white.opacity(0.88))
             Spacer()
             Text(value)
                 .font(.subheadline)
-                .foregroundStyle(HLColor.secondaryText)
+                .foregroundStyle(.white.opacity(0.58))
                 .multilineTextAlignment(.trailing)
         }
     }
@@ -228,7 +228,7 @@ struct SectionCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 16) {
             Text(title)
                 .font(.headline.weight(.semibold))
-                .foregroundStyle(HLColor.text)
+                .foregroundStyle(.white)
             content
         }
         .padding(18)

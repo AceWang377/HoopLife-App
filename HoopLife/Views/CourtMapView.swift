@@ -11,6 +11,10 @@ struct CourtMapView: View {
             span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
         )
     )
+    @State private var mapRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 53.3811, longitude: -1.4701),
+        span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+    )
     @State private var searchText = ""
     @State private var showingFilters = false
     @State private var showingDetail = false
@@ -30,10 +34,24 @@ struct CourtMapView: View {
         store.courts.count
     }
 
+    private var mapCourts: [Court] {
+        let regionCourts = visibleCourts
+            .filter { mapRegion.contains($0.coordinate, padding: 0.18) }
+            .sorted {
+                mapRegion.center.distance(to: $0.coordinate) < mapRegion.center.distance(to: $1.coordinate)
+            }
+
+        var courts = Array(regionCourts.prefix(360))
+        if let selectedCourt = store.selectedCourt, !courts.contains(where: { $0.id == selectedCourt.id }) {
+            courts.append(selectedCourt)
+        }
+        return courts
+    }
+
     var body: some View {
         ZStack {
             Map(position: $cameraPosition) {
-                ForEach(visibleCourts) { court in
+                ForEach(mapCourts) { court in
                     Annotation("", coordinate: court.coordinate) {
                         Button {
                             HLHaptics.selection()
@@ -51,6 +69,9 @@ struct CourtMapView: View {
                 UserAnnotation()
             }
             .mapStyle(.standard(elevation: .flat, pointsOfInterest: .including([.park, .publicTransport, .school])))
+            .onMapCameraChange(frequency: .onEnd) { context in
+                mapRegion = context.region
+            }
             .ignoresSafeArea()
 
             LinearGradient(
@@ -94,6 +115,10 @@ struct CourtMapView: View {
                         center: coordinate,
                         span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
                     )
+                )
+                mapRegion = MKCoordinateRegion(
+                    center: coordinate,
+                    span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
                 )
             }
         }
@@ -319,12 +344,12 @@ struct CourtMapView: View {
     }
 
     private func focusMap(on court: Court) {
-        cameraPosition = .region(
-            MKCoordinateRegion(
-                center: court.coordinate,
-                span: MKCoordinateSpan(latitudeDelta: 0.028, longitudeDelta: 0.028)
-            )
+        let region = MKCoordinateRegion(
+            center: court.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: 0.028, longitudeDelta: 0.028)
         )
+        cameraPosition = .region(region)
+        mapRegion = region
     }
 
     private func locateUser() {
@@ -427,5 +452,28 @@ struct CourtPin: View {
         case .userSuggested: HLColor.electricBlue
         case .imported: HLColor.imported
         }
+    }
+}
+
+private extension MKCoordinateRegion {
+    func contains(_ coordinate: CLLocationCoordinate2D, padding: Double) -> Bool {
+        let latitudePadding = span.latitudeDelta * padding
+        let longitudePadding = span.longitudeDelta * padding
+        let minLatitude = center.latitude - span.latitudeDelta / 2 - latitudePadding
+        let maxLatitude = center.latitude + span.latitudeDelta / 2 + latitudePadding
+        let minLongitude = center.longitude - span.longitudeDelta / 2 - longitudePadding
+        let maxLongitude = center.longitude + span.longitudeDelta / 2 + longitudePadding
+
+        return coordinate.latitude >= minLatitude &&
+            coordinate.latitude <= maxLatitude &&
+            coordinate.longitude >= minLongitude &&
+            coordinate.longitude <= maxLongitude
+    }
+}
+
+private extension CLLocationCoordinate2D {
+    func distance(to coordinate: CLLocationCoordinate2D) -> CLLocationDistance {
+        CLLocation(latitude: latitude, longitude: longitude)
+            .distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude))
     }
 }
