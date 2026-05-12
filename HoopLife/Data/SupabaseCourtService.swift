@@ -1,0 +1,229 @@
+import Foundation
+
+enum SupabaseConfig {
+    static let projectURL = URL(string: "https://mcvqmgzsklltrikuuigh.supabase.co")!
+    static let publishableKey = "sb_publishable_18IzWW2F4scgneSmgz7fsA_p_t28wXf"
+}
+
+struct SupabaseCourtService {
+    func fetchCourts(limit: Int = 10_000) async throws -> [Court] {
+        let pageSize = 1_000
+        var allCourts: [Court] = []
+        var offset = 0
+
+        while allCourts.count < limit {
+            let page = try await fetchCourtPage(limit: min(pageSize, limit - allCourts.count), offset: offset)
+            allCourts.append(contentsOf: page)
+            if page.count < pageSize { break }
+            offset += pageSize
+        }
+
+        return allCourts
+    }
+
+    private func fetchCourtPage(limit: Int, offset: Int) async throws -> [Court] {
+        var components = URLComponents(
+            url: SupabaseConfig.projectURL.appending(path: "/rest/v1/courts"),
+            resolvingAgainstBaseURL: false
+        )
+        components?.queryItems = [
+            URLQueryItem(name: "select", value: SupabaseCourtDTO.selectColumns),
+            URLQueryItem(name: "order", value: "name.asc"),
+            URLQueryItem(name: "limit", value: String(limit)),
+            URLQueryItem(name: "offset", value: String(offset))
+        ]
+
+        guard let url = components?.url else {
+            throw SupabaseCourtError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue(SupabaseConfig.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(SupabaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw SupabaseCourtError.invalidResponse
+        }
+        guard 200..<300 ~= httpResponse.statusCode else {
+            throw SupabaseCourtError.requestFailed(statusCode: httpResponse.statusCode)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode([SupabaseCourtDTO].self, from: data).map(\.court)
+    }
+}
+
+enum SupabaseCourtError: Error {
+    case invalidURL
+    case invalidResponse
+    case requestFailed(statusCode: Int)
+}
+
+private struct SupabaseCourtDTO: Decodable {
+    static let selectColumns = [
+        "id",
+        "name",
+        "area",
+        "city",
+        "latitude",
+        "longitude",
+        "source",
+        "source_license",
+        "confidence",
+        "last_checked_at",
+        "court_type",
+        "access_type",
+        "price_type",
+        "has_lights",
+        "dryness_after_rain",
+        "slippery_when_wet",
+        "rain_playable",
+        "surface_type",
+        "surface_condition",
+        "court_cleanliness",
+        "court_space",
+        "runoff_safety",
+        "peak_times",
+        "has_nets",
+        "rim_height",
+        "rim_type",
+        "backboard_condition",
+        "rim_condition",
+        "hoop_count",
+        "opening_hours",
+        "evening_access",
+        "has_toilets",
+        "has_drinking_water",
+        "has_parking",
+        "has_changing_rooms",
+        "good_for_solo",
+        "good_for_pickup",
+        "good_for_training",
+        "beginner_friendly",
+        "notes",
+        "photo_asset_name"
+    ].joined(separator: ",")
+
+    var id: String
+    var name: String?
+    var area: String?
+    var city: String?
+    var latitude: Double
+    var longitude: Double
+    var source: String?
+    var sourceLicense: String?
+    var confidence: String?
+    var lastCheckedAt: String?
+    var courtType: String?
+    var accessType: String?
+    var priceType: String?
+    var hasLights: String?
+    var drynessAfterRain: String?
+    var slipperyWhenWet: String?
+    var rainPlayable: String?
+    var surfaceType: String?
+    var surfaceCondition: String?
+    var courtCleanliness: String?
+    var courtSpace: String?
+    var runoffSafety: String?
+    var peakTimes: String?
+    var hasNets: String?
+    var rimHeight: String?
+    var rimType: String?
+    var backboardCondition: String?
+    var rimCondition: String?
+    var hoopCount: Int?
+    var openingHours: String?
+    var eveningAccess: String?
+    var hasToilets: String?
+    var hasDrinkingWater: String?
+    var hasParking: String?
+    var hasChangingRooms: String?
+    var goodForSolo: String?
+    var goodForPickup: String?
+    var goodForTraining: String?
+    var beginnerFriendly: String?
+    var notes: String?
+    var photoAssetName: String?
+
+    var court: Court {
+        Court(
+            id: id,
+            name: clean(name, fallback: "Unnamed court"),
+            area: clean(area, fallback: "Unknown area"),
+            city: clean(city, fallback: "UK"),
+            latitude: latitude,
+            longitude: longitude,
+            source: enumValue(DataSource.self, source, fallback: .openStreetMap),
+            sourceLicense: clean(sourceLicense, fallback: "ODbL - OpenStreetMap contributors"),
+            confidence: enumValue(DataConfidence.self, confidence, fallback: .imported),
+            lastCheckedAt: clean(lastCheckedAt, fallback: "Imported"),
+            courtType: enumValue(CourtType.self, courtType, fallback: .unknown),
+            accessType: enumValue(AccessType.self, accessType, fallback: .unknown),
+            priceType: enumValue(PriceType.self, priceType, fallback: .unknown),
+            hasLights: enumValue(FactStatus.self, hasLights, fallback: .unknown),
+            drynessAfterRain: enumValue(DrynessAfterRain.self, drynessAfterRain, fallback: .unknown),
+            slipperyWhenWet: enumValue(FactStatus.self, slipperyWhenWet, fallback: .unknown),
+            rainPlayable: enumValue(RainPlayable.self, rainPlayable, fallback: .unknown),
+            surfaceType: enumValue(SurfaceType.self, surfaceType, fallback: .unknown),
+            surfaceCondition: enumValue(SurfaceCondition.self, surfaceCondition, fallback: .unknown),
+            courtCleanliness: enumValue(CourtCleanliness.self, courtCleanliness, fallback: .unknown),
+            courtSpace: enumValue(CourtSpace.self, courtSpace, fallback: .unknown),
+            runoffSafety: enumValue(RunoffSafety.self, runoffSafety, fallback: .unknown),
+            peakTimes: parsePeakTimes(peakTimes),
+            hasNets: enumValue(NetsStatus.self, hasNets, fallback: .unknown),
+            rimHeight: enumValue(RimHeight.self, rimHeight, fallback: .unknown),
+            rimType: enumValue(RimType.self, rimType, fallback: .unknown),
+            backboardCondition: enumValue(HardwareCondition.self, backboardCondition, fallback: .unknown),
+            rimCondition: enumValue(HardwareCondition.self, rimCondition, fallback: .unknown),
+            hoopCount: hoopCount,
+            openingHours: clean(openingHours, fallback: "Access not confirmed"),
+            eveningAccess: enumValue(EveningAccess.self, eveningAccess, fallback: .unknown),
+            hasToilets: enumValue(FacilityStatus.self, hasToilets, fallback: .unknown),
+            hasDrinkingWater: enumValue(FacilityStatus.self, hasDrinkingWater, fallback: .unknown),
+            hasParking: enumValue(FacilityStatus.self, hasParking, fallback: .unknown),
+            hasChangingRooms: enumValue(FactStatus.self, hasChangingRooms, fallback: .unknown),
+            goodForSolo: enumValue(FactStatus.self, goodForSolo, fallback: .unknown),
+            goodForPickup: enumValue(FactStatus.self, goodForPickup, fallback: .unknown),
+            goodForTraining: enumValue(FactStatus.self, goodForTraining, fallback: .unknown),
+            beginnerFriendly: enumValue(FactStatus.self, beginnerFriendly, fallback: .unknown),
+            notes: clean(notes, fallback: ""),
+            photoAssetName: cleanOptional(photoAssetName)
+        )
+    }
+
+    private func clean(_ value: String?, fallback: String) -> String {
+        guard let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            return fallback
+        }
+        return value
+    }
+
+    private func cleanOptional(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func enumValue<Value: RawRepresentable>(_ type: Value.Type, _ rawValue: String?, fallback: Value) -> Value where Value.RawValue == String {
+        guard let rawValue else { return fallback }
+        return Value(rawValue: rawValue) ?? fallback
+    }
+
+    private func parsePeakTimes(_ value: String?) -> [PeakTime] {
+        guard let value else { return [.unknown] }
+        let cleaned = value
+            .replacingOccurrences(of: "{", with: "")
+            .replacingOccurrences(of: "}", with: "")
+            .replacingOccurrences(of: "\"", with: "")
+
+        let items = cleaned
+            .split(separator: ",")
+            .compactMap { PeakTime(rawValue: String($0).trimmingCharacters(in: .whitespacesAndNewlines)) }
+
+        return items.isEmpty ? [.unknown] : items
+    }
+}

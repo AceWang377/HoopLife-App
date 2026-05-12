@@ -11,12 +11,15 @@ final class AppStore: ObservableObject {
     @Published var courtCandidates: [CourtCandidate] = []
     @Published var hasCompletedOnboarding: Bool
     @Published var isAdminUnlocked: Bool
+    @Published var courtDataSource = "Local seed"
+    @Published var isLoadingRemoteCourts = false
 
     private let savedKey = "hooplife.savedCourts"
     private let onboardingKey = "hooplife.hasCompletedOnboarding"
     private let courtsKey = "hooplife.courts.override"
     private let adminKey = "hooplife.adminUnlocked"
     private let adminPasscode = "HOOPLIFE-ADMIN"
+    private let supabaseCourtService = SupabaseCourtService()
 
     init(courts: [Court] = CourtSeedStore.loadCourts()) {
         self.courts = Self.loadPersistedCourts() ?? courts
@@ -54,6 +57,26 @@ final class AppStore: ObservableObject {
 
     func addSuggestion(_ suggestion: CourtSuggestion) {
         suggestions.insert(suggestion, at: 0)
+    }
+
+    func loadRemoteCourts() async {
+        guard !isLoadingRemoteCourts else { return }
+        isLoadingRemoteCourts = true
+        defer { isLoadingRemoteCourts = false }
+
+        do {
+            let remoteCourts = try await supabaseCourtService.fetchCourts()
+            guard !remoteCourts.isEmpty else { return }
+            courts = remoteCourts
+            courtDataSource = "Supabase"
+            selectedCourt = selectedCourt.flatMap { selected in
+                remoteCourts.first { $0.id == selected.id }
+            }
+            print("HoopLife loaded \(remoteCourts.count) courts from Supabase")
+        } catch {
+            courtDataSource = "Local seed"
+            print("HoopLife Supabase court load failed: \(error)")
+        }
     }
 
     func updateCourt(_ court: Court) {

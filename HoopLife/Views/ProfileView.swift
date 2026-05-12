@@ -62,6 +62,28 @@ struct ProfileView: View {
                 ProfileLink(title: "Data sources", subtitle: "OSM, manual checks, confidence", icon: "chart.bar.doc.horizontal") {
                     AboutDataView()
                 }
+                HStack(spacing: 12) {
+                    Image(systemName: store.isLoadingRemoteCourts ? "arrow.triangle.2.circlepath" : "externaldrive.connected.to.line.below.fill")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(HLColor.night)
+                        .frame(width: 38, height: 38)
+                        .background(HLColor.freshGreen)
+                        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Court source")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(HLColor.text)
+                        Text(store.isLoadingRemoteCourts ? "Syncing courts..." : store.courtDataSource)
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(HLColor.secondaryText)
+                    }
+
+                    Spacer()
+                }
+                .padding(14)
+                .background(Color.white.opacity(0.70))
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                 ProfileLink(title: "Terms and privacy", subtitle: "Simple MVP terms", icon: "doc.text.fill") {
                     TermsView()
                 }

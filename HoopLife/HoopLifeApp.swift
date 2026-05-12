@@ -8,6 +8,9 @@ struct HoopLifeApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(store)
+                .task {
+                    await store.loadRemoteCourts()
+                }
         }
     }
 }
