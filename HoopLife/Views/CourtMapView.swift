@@ -1,8 +1,10 @@
 import SwiftUI
 import MapKit
+import CoreLocation
 
 struct CourtMapView: View {
     @EnvironmentObject private var store: AppStore
+    @StateObject private var locationManager = HoopLifeLocationManager()
     @State private var cameraPosition: MapCameraPosition = .region(
         MKCoordinateRegion(
             center: CLLocationCoordinate2D(latitude: 53.3811, longitude: -1.4701),
@@ -41,6 +43,8 @@ struct CourtMapView: View {
                         .buttonStyle(.plain)
                     }
                 }
+
+                UserAnnotation()
             }
             .mapStyle(.standard(elevation: .flat, pointsOfInterest: .including([.park, .publicTransport, .school])))
             .ignoresSafeArea()
@@ -79,6 +83,16 @@ struct CourtMapView: View {
                 SuggestEditView(court: court)
             }
         }
+        .onReceive(locationManager.$lastLocation.compactMap { $0 }) { coordinate in
+            withAnimation(.spring(response: 0.38, dampingFraction: 0.88)) {
+                cameraPosition = .region(
+                    MKCoordinateRegion(
+                        center: coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
+                    )
+                )
+            }
+        }
     }
 
     private var topControlStack: some View {
@@ -86,6 +100,21 @@ struct CourtMapView: View {
             HStack(spacing: 10) {
                 brandPill
                 Spacer()
+                Button {
+                    locateUser()
+                } label: {
+                    Image(systemName: locationManager.isLocating ? "location.fill" : "location")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(locationManager.lastLocation == nil ? .white : HLColor.night)
+                        .frame(width: 48, height: 48)
+                        .background(locationManager.lastLocation == nil ? .black.opacity(0.54) : HLColor.freshGreen)
+                        .clipShape(Circle())
+                        .overlay {
+                            Circle().stroke(.white.opacity(0.13), lineWidth: 1)
+                        }
+                }
+                .buttonStyle(.plain)
+
                 Button {
                     HLHaptics.light()
                     showingFilters = true
@@ -299,9 +328,9 @@ struct CourtMapView: View {
                 .foregroundStyle(.white.opacity(0.70))
 
             HStack(spacing: 10) {
-                Button("Directions") {
-                    HLHaptics.medium()
-                    openDirections(to: court)
+                Button("Facts") {
+                    HLHaptics.light()
+                    showingSuggestion = true
                 }
                 .buttonStyle(DarkPrimaryButtonStyle())
 
@@ -311,6 +340,12 @@ struct CourtMapView: View {
                 }
                 .buttonStyle(DarkSecondaryButtonStyle())
             }
+
+            Button("Directions") {
+                    HLHaptics.medium()
+                    openDirections(to: court)
+            }
+            .buttonStyle(DarkSecondaryButtonStyle())
         }
         .padding(16)
         .background(.black.opacity(0.62))
@@ -366,6 +401,55 @@ struct CourtMapView: View {
                 span: MKCoordinateSpan(latitudeDelta: 0.028, longitudeDelta: 0.028)
             )
         )
+    }
+
+    private func locateUser() {
+        HLHaptics.light()
+        locationManager.requestLocation()
+    }
+}
+
+final class HoopLifeLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published var lastLocation: CLLocationCoordinate2D?
+    @Published var isLocating = false
+
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+    }
+
+    func requestLocation() {
+        isLocating = true
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            manager.requestWhenInUseAuthorization()
+        case .authorizedAlways, .authorizedWhenInUse:
+            manager.requestLocation()
+        case .denied, .restricted:
+            isLocating = false
+        @unknown default:
+            isLocating = false
+        }
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if manager.authorizationStatus == .authorizedAlways || manager.authorizationStatus == .authorizedWhenInUse {
+            manager.requestLocation()
+        } else if manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
+            isLocating = false
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        lastLocation = locations.last?.coordinate
+        isLocating = false
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        isLocating = false
     }
 }
 

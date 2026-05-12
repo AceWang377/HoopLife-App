@@ -13,6 +13,7 @@ struct AddCourtView: View {
     @State private var area = ""
     @State private var type: CourtType = .outdoor
     @State private var submitted = false
+    @State private var selectedCoordinate = CLLocationCoordinate2D(latitude: 53.3811, longitude: -1.4701)
 
     private let defaultCoordinate = CLLocationCoordinate2D(latitude: 53.3811, longitude: -1.4701)
 
@@ -23,17 +24,39 @@ struct AddCourtView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Add a court")
                             .font(.system(size: 38, weight: .black, design: .rounded))
-                        Text("Drop a missing court onto the map. Richer facts can be added after it exists.")
+                        Text("Tap the map to place a candidate. New courts stay pending until reviewed.")
                             .font(.body.weight(.medium))
                             .foregroundStyle(HLColor.secondaryText)
                     }
 
-                    Map(position: $cameraPosition) {
-                        Marker("New court", coordinate: defaultCoordinate)
-                            .tint(HLColor.basketballOrange)
+                    MapReader { proxy in
+                        Map(position: $cameraPosition) {
+                            Marker("Candidate court", coordinate: selectedCoordinate)
+                                .tint(HLColor.basketballOrange)
+                        }
+                        .mapStyle(.standard(elevation: .flat))
+                        .gesture(
+                            SpatialTapGesture().onEnded { value in
+                                if let coordinate = proxy.convert(value.location, from: .local) {
+                                    HLHaptics.selection()
+                                    selectedCoordinate = coordinate
+                                    submitted = false
+                                }
+                            }
+                        )
                     }
                     .frame(height: 260)
                     .clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+                    .overlay(alignment: .bottomLeading) {
+                        Text("Lat \(selectedCoordinate.latitude.formatted(.number.precision(.fractionLength(5)))) · Lon \(selectedCoordinate.longitude.formatted(.number.precision(.fractionLength(5))))")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(.black.opacity(0.58))
+                            .clipShape(Capsule())
+                            .padding(12)
+                    }
 
                     SectionCard(title: "Court details") {
                         VStack(alignment: .leading, spacing: 14) {
@@ -51,7 +74,7 @@ struct AddCourtView: View {
                     }
 
                     if submitted {
-                        Text("Court added as a user suggestion. It is marked as needs review.")
+                        Text("Candidate submitted for review. It will not appear on the public map until approved.")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(HLColor.courtGreen)
                             .padding()
@@ -64,12 +87,13 @@ struct AddCourtView: View {
             }
             .pageBackground()
             .safeAreaInset(edge: .bottom) {
-                Button("Submit court") {
-                    store.addMissingCourt(
+                Button("Submit candidate") {
+                    HLHaptics.medium()
+                    store.submitCourtCandidate(
                         name: name,
                         area: area,
-                        latitude: defaultCoordinate.latitude,
-                        longitude: defaultCoordinate.longitude,
+                        latitude: selectedCoordinate.latitude,
+                        longitude: selectedCoordinate.longitude,
                         courtType: type
                     )
                     name = ""
@@ -90,8 +114,13 @@ struct AddCourtView: View {
                 .font(.subheadline.weight(.semibold))
             TextField(placeholder, text: text)
                 .padding(14)
-                .background(HLColor.background)
+                .foregroundStyle(HLColor.text)
+                .background(Color.white.opacity(0.94))
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(HLColor.stroke.opacity(0.8), lineWidth: 1)
+                }
         }
     }
 }

@@ -8,6 +8,7 @@ final class AppStore: ObservableObject {
     @Published var selectedCourt: Court?
     @Published var savedCourtIDs: Set<String>
     @Published var suggestions: [CourtSuggestion] = []
+    @Published var courtCandidates: [CourtCandidate] = []
     @Published var hasCompletedOnboarding: Bool
 
     private let savedKey = "hooplife.savedCourts"
@@ -50,50 +51,26 @@ final class AppStore: ObservableObject {
         suggestions.insert(suggestion, at: 0)
     }
 
-    func addMissingCourt(name: String, area: String, latitude: Double, longitude: Double, courtType: CourtType) {
-        let court = Court(
-            id: "user-\(UUID().uuidString)",
-            name: name.isEmpty ? "Untitled court" : name,
-            area: area.isEmpty ? "Area pending" : area,
-            city: "Local",
-            latitude: latitude,
-            longitude: longitude,
-            source: .userSuggested,
-            sourceLicense: "User submitted",
-            confidence: .userSuggested,
-            lastCheckedAt: "Pending review",
-            courtType: courtType,
-            accessType: .unknown,
-            priceType: .unknown,
-            hasLights: .unknown,
-            drynessAfterRain: .unknown,
-            slipperyWhenWet: .unknown,
-            rainPlayable: .unknown,
-            surfaceType: .unknown,
-            surfaceCondition: .unknown,
-            courtCleanliness: .unknown,
-            courtSpace: .unknown,
-            runoffSafety: .unknown,
-            peakTimes: [.unknown],
-            hasNets: .unknown,
-            rimHeight: .unknown,
-            rimType: .unknown,
-            backboardCondition: .unknown,
-            rimCondition: .unknown,
-            hoopCount: nil,
-            openingHours: "Unknown",
-            eveningAccess: .unknown,
-            hasToilets: .unknown,
-            hasDrinkingWater: .unknown,
-            hasParking: .unknown,
-            hasChangingRooms: .unknown,
-            goodForSolo: .unknown,
-            goodForPickup: .unknown,
-            goodForTraining: .unknown,
-            beginnerFriendly: .unknown,
-            notes: "Submitted from the app. Needs review."
+    func submitCourtCandidate(name: String, area: String, latitude: Double, longitude: Double, courtType: CourtType) {
+        courtCandidates.insert(
+            CourtCandidate(
+                name: name.isEmpty ? "Unnamed court candidate" : name,
+                area: area.isEmpty ? "Area pending" : area,
+                latitude: latitude,
+                longitude: longitude,
+                courtType: courtType
+            ),
+            at: 0
         )
-        courts.insert(court, at: 0)
-        selectedCourt = court
     }
+}
+
+struct CourtCandidate: Identifiable, Hashable {
+    let id = UUID()
+    var name: String
+    var area: String
+    var latitude: Double
+    var longitude: Double
+    var courtType: CourtType
+    var submittedAt = Date()
 }

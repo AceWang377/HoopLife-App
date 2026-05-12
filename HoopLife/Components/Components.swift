@@ -64,11 +64,11 @@ struct SelectableChip: View {
                 .foregroundStyle(isSelected ? HLColor.night : HLColor.text)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(isSelected ? HLColor.freshGreen : Color.white.opacity(0.78))
+                .background(isSelected ? HLColor.freshGreen : Color(red: 0.78, green: 0.88, blue: 0.83))
                 .clipShape(Capsule())
                 .overlay {
                     Capsule()
-                        .stroke(isSelected ? HLColor.freshGreen.opacity(0.7) : .white.opacity(0.45), lineWidth: 1)
+                        .stroke(isSelected ? HLColor.freshGreen.opacity(0.7) : Color(red: 0.48, green: 0.62, blue: 0.56).opacity(0.55), lineWidth: 1)
                 }
         }
         .buttonStyle(.plain)
