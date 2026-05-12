@@ -84,12 +84,8 @@ struct MainTabView: View {
                 switch selectedTab {
                 case .map:
                     CourtMapView()
-                case .saved:
-                    SavedCourtsView()
-                case .contribute:
-                    AddCourtView()
-                case .data:
-                    AboutDataView()
+                case .profile:
+                    ProfileView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -106,25 +102,19 @@ struct MainTabView: View {
 
 enum AppTab: CaseIterable {
     case map
-    case saved
-    case contribute
-    case data
+    case profile
 
     var title: String {
         switch self {
         case .map: "Map"
-        case .saved: "Saved"
-        case .contribute: "Add"
-        case .data: "Data"
+        case .profile: "Profile"
         }
     }
 
     var icon: String {
         switch self {
         case .map: "map.fill"
-        case .saved: "bookmark.fill"
-        case .contribute: "plus"
-        case .data: "chart.bar.doc.horizontal"
+        case .profile: "person.crop.circle.fill"
         }
     }
 }

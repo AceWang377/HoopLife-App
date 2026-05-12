@@ -30,6 +30,7 @@ struct SavedCourtsView: View {
                     }
                 }
                 .padding(20)
+                .padding(.bottom, 110)
             }
             .pageBackground()
             .sheet(item: $selectedCourt) { court in

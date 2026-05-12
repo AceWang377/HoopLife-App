@@ -1,0 +1,218 @@
+import SwiftUI
+
+struct ProfileView: View {
+    @EnvironmentObject private var store: AppStore
+    @State private var passcode = ""
+    @State private var adminError = false
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    header
+                    quickStats
+                    librarySection
+                    dataSection
+                    Color.clear.frame(height: 52)
+                    adminSection
+                }
+                .padding(20)
+                .padding(.bottom, 150)
+            }
+            .pageBackground()
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Profile")
+                .font(.system(size: 38, weight: .black, design: .rounded))
+            Text("No public account needed. Saves, suggestions, and admin edits stay lightweight for the MVP.")
+                .font(.body.weight(.medium))
+                .foregroundStyle(HLColor.secondaryText)
+        }
+    }
+
+    private var quickStats: some View {
+        HStack(spacing: 10) {
+            StatTile(value: "\(store.courts.count)", label: "courts")
+            StatTile(value: "\(store.savedCourts.count)", label: "saved")
+            StatTile(value: "\(store.suggestions.count)", label: "edits")
+        }
+    }
+
+    private var librarySection: some View {
+        SectionCard(title: "Your HoopLife") {
+            VStack(spacing: 10) {
+                ProfileLink(title: "Saved courts", subtitle: "Your local list", icon: "bookmark.fill") {
+                    SavedCourtsView()
+                }
+                ProfileLink(title: "Suggest a new court", subtitle: "Candidate courts stay pending", icon: "plus.circle.fill") {
+                    AddCourtView()
+                }
+            }
+        }
+    }
+
+    private var dataSection: some View {
+        SectionCard(title: "Data and app info") {
+            VStack(spacing: 10) {
+                ProfileLink(title: "Data sources", subtitle: "OSM, manual checks, confidence", icon: "chart.bar.doc.horizontal") {
+                    AboutDataView()
+                }
+                ProfileLink(title: "Terms and privacy", subtitle: "Simple MVP terms", icon: "doc.text.fill") {
+                    TermsView()
+                }
+            }
+        }
+    }
+
+    private var adminSection: some View {
+        SectionCard(title: "Admin") {
+            VStack(alignment: .leading, spacing: 12) {
+                if store.isAdminUnlocked {
+                    ProfileLink(title: "Court database editor", subtitle: "Add or update verified facts", icon: "slider.horizontal.3") {
+                        AdminCourtEditorView()
+                    }
+
+                    Button {
+                        HLHaptics.light()
+                        store.lockAdmin()
+                        passcode = ""
+                    } label: {
+                        Label("Lock admin mode", systemImage: "lock.fill")
+                            .font(.subheadline.weight(.bold))
+                    }
+                    .buttonStyle(SecondaryButtonStyle())
+                } else {
+                    Text("Unlock only on your own device when you want to update real court facts directly inside the app.")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(HLColor.secondaryText)
+
+                    SecureField("Admin passcode", text: $passcode)
+                        .textInputAutocapitalization(.characters)
+                        .disableAutocorrection(true)
+                        .padding(14)
+                        .background(Color.white.opacity(0.94))
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(adminError ? HLColor.basketballOrange : HLColor.stroke, lineWidth: 1)
+                        }
+
+                    if adminError {
+                        Text("Passcode not recognised.")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(HLColor.basketballOrange)
+                    }
+
+                    Button {
+                        HLHaptics.medium()
+                        adminError = !store.unlockAdmin(passcode: passcode)
+                    } label: {
+                        Label("Unlock admin", systemImage: "key.fill")
+                            .font(.subheadline.weight(.bold))
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                }
+            }
+        }
+    }
+}
+
+struct StatTile: View {
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(value)
+                .font(.title.weight(.black))
+                .foregroundStyle(HLColor.text)
+            Text(label)
+                .font(.caption.weight(.bold))
+                .foregroundStyle(HLColor.secondaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .cardStyle(radius: 18)
+    }
+}
+
+struct ProfileLink<Destination: View>: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    @ViewBuilder var destination: Destination
+
+    var body: some View {
+        NavigationLink {
+            destination
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(HLColor.night)
+                    .frame(width: 38, height: 38)
+                    .background(HLColor.freshGreen)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(HLColor.text)
+                    Text(subtitle)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(HLColor.secondaryText)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(HLColor.mutedText)
+            }
+            .padding(14)
+            .background(Color.white.opacity(0.70))
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct TermsView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                Text("Terms and privacy")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+
+                SectionCard(title: "MVP promise") {
+                    Text("HoopLife shows practical court facts, not personal profiles or public ratings. Saved courts and admin unlock state are stored on this device in the current MVP.")
+                        .foregroundStyle(HLColor.secondaryText)
+                }
+
+                SectionCard(title: "Court data") {
+                    Text("Imported OpenStreetMap records are starting points and may be incomplete. Manual HoopLife checks should be used before marking a court verified.")
+                        .foregroundStyle(HLColor.secondaryText)
+                }
+
+                SectionCard(title: "OpenStreetMap attribution") {
+                    Text("Contains information from OpenStreetMap contributors, available under the Open Database License.")
+                        .foregroundStyle(HLColor.secondaryText)
+                }
+
+                SectionCard(title: "User suggestions") {
+                    Text("Suggestions are treated as pending input and should be reviewed before changing public court facts.")
+                        .foregroundStyle(HLColor.secondaryText)
+                }
+            }
+            .padding(20)
+            .padding(.bottom, 110)
+        }
+        .pageBackground()
+        .navigationTitle("Terms")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}

@@ -24,6 +24,8 @@
 		AA000001000000000000000F /* AboutDataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA000001000000000000010F /* AboutDataView.swift */; };
 		AA0000010000000000000010 /* CourtsSeed.json in Resources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000000110 /* CourtsSeed.json */; };
 		AA0000010000000000000011 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000000111 /* Assets.xcassets */; };
+		AA0000010000000000000012 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000000112 /* ProfileView.swift */; };
+		AA0000010000000000000013 /* AdminCourtEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0000010000000000000113 /* AdminCourtEditorView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +47,8 @@
 		AA000001000000000000010F /* AboutDataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutDataView.swift; sourceTree = "<group>"; };
 		AA0000010000000000000110 /* CourtsSeed.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = CourtsSeed.json; sourceTree = "<group>"; };
 		AA0000010000000000000111 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA0000010000000000000112 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		AA0000010000000000000113 /* AdminCourtEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminCourtEditorView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,6 +130,8 @@
 				AA000001000000000000010D /* AddCourtView.swift */,
 				AA000001000000000000010E /* SavedCourtsView.swift */,
 				AA000001000000000000010F /* AboutDataView.swift */,
+				AA0000010000000000000112 /* ProfileView.swift */,
+				AA0000010000000000000113 /* AdminCourtEditorView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -223,6 +229,8 @@
 				AA000001000000000000000D /* AddCourtView.swift in Sources */,
 				AA000001000000000000000E /* SavedCourtsView.swift in Sources */,
 				AA000001000000000000000F /* AboutDataView.swift in Sources */,
+				AA0000010000000000000012 /* ProfileView.swift in Sources */,
+				AA0000010000000000000013 /* AdminCourtEditorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

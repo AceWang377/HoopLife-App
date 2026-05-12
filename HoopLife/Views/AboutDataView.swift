@@ -40,6 +40,7 @@ struct AboutDataView: View {
                     }
                 }
                 .padding(20)
+                .padding(.bottom, 110)
             }
             .pageBackground()
         }
