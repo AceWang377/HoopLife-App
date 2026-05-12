@@ -214,43 +214,33 @@ struct AnimatedCourtIntro: View {
             let height = proxy.size.height
 
             ZStack {
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.015, green: 0.018, blue: 0.018),
-                        Color(red: 0.025, green: 0.22, blue: 0.14),
-                        Color(red: 0.08, green: 0.42, blue: 0.23),
-                        Color(red: 0.02, green: 0.035, blue: 0.03)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-
-                FullScreenCourtLines()
-                    .stroke(.white.opacity(0.26), lineWidth: 2.8)
-                    .frame(width: width * 1.42, height: height * 1.04)
-                    .rotationEffect(.degrees(-8))
-                    .offset(x: -width * 0.04, y: animate ? height * 0.08 : height * 0.14)
-                    .scaleEffect(animate ? 1 : 1.04)
-                    .animation(.easeOut(duration: 1.2), value: animate)
-
-                Circle()
-                    .fill(HLColor.basketballOrange)
-                    .frame(width: 64, height: 64)
-                    .overlay(BasketballLines().stroke(HLColor.night.opacity(0.55), lineWidth: 2))
-                    .offset(x: animate ? width * 0.33 : -width * 0.28, y: animate ? -height * 0.25 : -height * 0.40)
-                    .rotationEffect(.degrees(animate ? 360 : 0))
-                    .shadow(color: HLColor.basketballOrange.opacity(0.35), radius: 24)
-                    .animation(.spring(response: 1.15, dampingFraction: 0.78).delay(0.18), value: animate)
+                Image("HoopLifeCourtArt")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: width, height: height)
+                    .scaleEffect(animate ? 1.04 : 1.0)
+                    .offset(x: animate ? -width * 0.018 : width * 0.018, y: animate ? -height * 0.018 : height * 0.018)
+                    .animation(.easeOut(duration: 1.4), value: animate)
 
                 LinearGradient(
                     colors: [
-                        .black.opacity(0.08),
-                        .clear,
                         .black.opacity(0.18),
-                        .black.opacity(0.62)
+                        Color(red: 0.01, green: 0.12, blue: 0.10).opacity(0.12),
+                        .black.opacity(0.38),
+                        .black.opacity(0.70)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
+                )
+
+                RadialGradient(
+                    colors: [
+                        .clear,
+                        .black.opacity(0.42)
+                    ],
+                    center: .center,
+                    startRadius: min(width, height) * 0.18,
+                    endRadius: max(width, height) * 0.62
                 )
             }
             .frame(width: width, height: height)

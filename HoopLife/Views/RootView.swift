@@ -2,15 +2,76 @@ import SwiftUI
 
 struct RootView: View {
     @EnvironmentObject private var store: AppStore
+    @State private var isShowingSplash = true
 
     var body: some View {
-        Group {
-            if store.hasCompletedOnboarding {
-                MainTabView()
-            } else {
-                OnboardingView()
+        ZStack {
+            Group {
+                if store.hasCompletedOnboarding {
+                    MainTabView()
+                } else {
+                    OnboardingView()
+                }
+            }
+
+            if isShowingSplash {
+                SplashView()
+                    .transition(.opacity.combined(with: .scale(scale: 1.02)))
             }
         }
+        .task {
+            try? await Task.sleep(for: .seconds(1.15))
+            withAnimation(.easeOut(duration: 0.45)) {
+                isShowingSplash = false
+            }
+        }
+    }
+}
+
+struct SplashView: View {
+    var body: some View {
+        ZStack {
+            Image("HoopLifeCourtArt")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.018, green: 0.075, blue: 0.065).opacity(0.28),
+                            .black.opacity(0.44)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .ignoresSafeArea()
+                }
+
+            VStack(spacing: 18) {
+                Image("HoopLifeSplashMark")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 172, height: 172)
+                    .clipShape(RoundedRectangle(cornerRadius: 42, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 42, style: .continuous)
+                            .stroke(.white.opacity(0.24), lineWidth: 1)
+                    }
+                    .shadow(color: .black.opacity(0.28), radius: 30, y: 18)
+
+                VStack(spacing: 6) {
+                    Text("HoopLife")
+                        .font(.system(size: 34, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+
+                    Text("court facts, not ratings")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.72))
+                }
+            }
+            .padding(.horizontal, 32)
+        }
+        .background(Color(red: 0.018, green: 0.075, blue: 0.065))
     }
 }
 
