@@ -29,7 +29,7 @@ struct AboutDataView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             FactRow(title: "OSM", value: "OpenStreetMap contributors")
                             FactRow(title: "Active", value: "Sport England Active Places")
-                            FactRow(title: "Manual", value: "HoopLife Sheffield seed")
+                            FactRow(title: "Manual", value: "HoopLife local seed")
                         }
                     }
 

@@ -19,8 +19,8 @@ enum CourtSeedStore {
         Court(
             id: "fallback-dev-green",
             name: "Devonshire Green Court",
-            area: "Sheffield City Centre",
-            city: "Sheffield",
+            area: "City Centre",
+            city: "Local",
             latitude: 53.3802,
             longitude: -1.4795,
             source: .hoopLifeManual,

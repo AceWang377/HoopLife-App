@@ -43,14 +43,14 @@ struct SelectableChip: View {
         Button(action: action) {
             Text(label)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(isSelected ? .white : HLColor.secondaryText)
+                .foregroundStyle(isSelected ? HLColor.night : HLColor.text)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 10)
-                .background(isSelected ? HLColor.night : Color.white.opacity(0.86))
+                .background(isSelected ? HLColor.freshGreen : Color.white.opacity(0.78))
                 .clipShape(Capsule())
                 .overlay {
                     Capsule()
-                        .stroke(isSelected ? HLColor.night : HLColor.stroke.opacity(0.7), lineWidth: 1)
+                        .stroke(isSelected ? HLColor.freshGreen.opacity(0.7) : .white.opacity(0.45), lineWidth: 1)
                 }
         }
         .buttonStyle(.plain)
@@ -128,13 +128,20 @@ struct CourtCard: View {
             HStack {
                 ConfidenceBadge(confidence: court.confidence)
                 Spacer()
-                Label("Sheffield", systemImage: "location")
+                Label(court.area, systemImage: "location")
                     .font(.caption.weight(.medium))
                     .foregroundStyle(HLColor.secondaryText)
+                    .lineLimit(1)
             }
         }
         .padding(16)
-        .cardStyle(radius: 24)
+        .background(.white.opacity(0.92))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(.white.opacity(0.55), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.12), radius: 20, y: 8)
     }
 
     private var courtBadge: some View {

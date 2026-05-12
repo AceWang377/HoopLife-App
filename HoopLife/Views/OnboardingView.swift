@@ -10,113 +10,110 @@ struct OnboardingView: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                HLColor.night.ignoresSafeArea()
+                AnimatedCourtIntro()
+                    .ignoresSafeArea()
 
                 if step == 0 {
                     welcome(size: proxy.size)
-                } else if step == 1 {
-                    location(size: proxy.size)
                 } else {
-                    preferencesView
-                        .pageBackground()
+                    preferencesView(size: proxy.size)
                 }
             }
+            .background(HLColor.night.ignoresSafeArea())
         }
     }
 
     private func welcome(size: CGSize) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            AnimatedCourtIntro()
-                .ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 18) {
-                Spacer(minLength: 0)
-
-                HStack(spacing: 10) {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                HStack(spacing: 8) {
                     Image(systemName: "basketball.fill")
                         .foregroundStyle(HLColor.basketballOrange)
                     Text("HoopLife")
-                        .font(.title3.weight(.bold))
+                        .font(.headline.weight(.black))
                         .foregroundStyle(.white)
                 }
+                .padding(.horizontal, 14)
+                .frame(height: 44)
+                .background(.black.opacity(0.28))
+                .clipShape(Capsule())
+                .overlay {
+                    Capsule().stroke(.white.opacity(0.12), lineWidth: 1)
+                }
 
-                Text("Know the court before you leave.")
-                    .font(.system(size: min(size.width * 0.098, 40), weight: .bold, design: .default))
+                Spacer()
+            }
+
+            Spacer(minLength: 28)
+
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Know before you hoop.")
+                    .font(.system(size: min(size.width * 0.108, 42), weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text("Dry surface, nets, rim height, lights, space and real Sheffield court facts.")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.78))
+                Text("Dry surface, nets, rim height, lights, space and access. Fast court facts without logging in.")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.76))
+                    .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Button("Find courts near me") {
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) {
+                HStack(spacing: 10) {
+                    WelcomeMetric(value: "\(store.courts.count)", label: "courts")
+                    WelcomeMetric(value: "0", label: "login")
+                    WelcomeMetric(value: "live", label: "map")
+                }
+                .padding(.top, 6)
+            }
+
+            Spacer(minLength: 30)
+
+            VStack(spacing: 12) {
+                Button("Open court map") {
+                    store.completeOnboarding()
+                }
+                .buttonStyle(DarkPrimaryButtonStyle())
+
+                Button("Choose court facts") {
+                    withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
                         step = 1
                     }
                 }
-                .buttonStyle(DarkPrimaryButtonStyle())
-                .padding(.top, 12)
-
-                Button("Explore Sheffield") {
-                    store.completeOnboarding()
-                }
                 .buttonStyle(DarkSecondaryButtonStyle())
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-            .padding(.horizontal, 24)
-            .padding(.bottom, max(size.height * 0.07, 42))
         }
-        .frame(width: size.width, height: size.height, alignment: .bottomLeading)
-        .ignoresSafeArea()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 24)
+        .safeAreaPadding(.top, 32)
+        .safeAreaPadding(.bottom, 30)
     }
 
-    private func location(size: CGSize) -> some View {
-        VStack(alignment: .leading, spacing: 24) {
-            MapIllustration()
-                .frame(height: min(size.height * 0.46, 390))
-                .padding(.top, 18)
-
-            VStack(alignment: .leading, spacing: 12) {
-                Text("Use your location?")
-                    .font(.system(size: 38, weight: .black, design: .rounded))
-                    .foregroundStyle(HLColor.text)
-
-                Text("HoopLife uses it to sort nearby courts. You can still browse Sheffield without it.")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(HLColor.secondaryText)
-            }
-            .padding(.top, 6)
-
-            Spacer(minLength: 8)
-
-            Button("Allow location") {
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) {
-                    step = 2
+    private func preferencesView(size: CGSize) -> some View {
+        VStack(alignment: .leading, spacing: 22) {
+            Button {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
+                    step = 0
                 }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.headline.weight(.bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 44, height: 44)
+                    .background(.black.opacity(0.28))
+                    .clipShape(Circle())
             }
-            .buttonStyle(PrimaryButtonStyle())
 
-            Button("Not now") {
-                withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) {
-                    step = 2
-                }
-            }
-            .buttonStyle(SecondaryButtonStyle())
-        }
-        .padding(24)
-        .pageBackground()
-    }
+            Spacer()
 
-    private var preferencesView: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            Text("What matters today?")
-                .font(.system(size: 38, weight: .black, design: .rounded))
-                .foregroundStyle(HLColor.text)
+            Text("What should the map surface first?")
+                .font(.system(size: min(size.width * 0.105, 40), weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .fixedSize(horizontal: false, vertical: true)
 
-            Text("Pick the court facts you care about most. No account needed.")
-                .foregroundStyle(HLColor.secondaryText)
+            Text("Pick the factual court signals that matter for your next run.")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.76))
 
             FlowLayout(spacing: 10) {
                 ForEach(preferences, id: \.self) { preference in
@@ -130,9 +127,7 @@ struct OnboardingView: View {
                 }
             }
 
-            Spacer()
-
-            Button("Show courts") {
+            Button("Show court map") {
                 store.filters.outdoor = selectedPreferences.contains("Outdoor")
                 store.filters.indoor = selectedPreferences.contains("Indoor")
                 store.filters.free = selectedPreferences.contains("Free")
@@ -143,14 +138,42 @@ struct OnboardingView: View {
                 store.filters.solo = selectedPreferences.contains("Solo shooting")
                 store.completeOnboarding()
             }
-            .buttonStyle(PrimaryButtonStyle())
+            .buttonStyle(DarkPrimaryButtonStyle())
+            .padding(.top, 8)
 
-            Button("Skip for now") {
+            Button("Skip filters") {
                 store.completeOnboarding()
             }
-            .buttonStyle(SecondaryButtonStyle())
+            .buttonStyle(DarkSecondaryButtonStyle())
         }
-        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 24)
+        .safeAreaPadding(.top, 32)
+        .safeAreaPadding(.bottom, 30)
+    }
+}
+
+struct WelcomeMetric: View {
+    let value: String
+    let label: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.system(size: 17, weight: .black))
+            Text(label)
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.white.opacity(0.62))
+        }
+        .foregroundStyle(.white)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(.black.opacity(0.24))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(.white.opacity(0.13), lineWidth: 1)
+        }
     }
 }
 
@@ -193,33 +216,28 @@ struct AnimatedCourtIntro: View {
             ZStack {
                 LinearGradient(
                     colors: [
-                        Color(red: 0.02, green: 0.05, blue: 0.035),
-                        Color(red: 0.02, green: 0.24, blue: 0.14),
-                        Color(red: 0.04, green: 0.38, blue: 0.20),
-                        Color(red: 0.02, green: 0.08, blue: 0.05)
+                        Color(red: 0.015, green: 0.018, blue: 0.018),
+                        Color(red: 0.025, green: 0.22, blue: 0.14),
+                        Color(red: 0.08, green: 0.42, blue: 0.23),
+                        Color(red: 0.02, green: 0.035, blue: 0.03)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
 
-                Rectangle()
-                    .fill(Color.white.opacity(0.035))
-                    .frame(width: width * 1.4, height: height * 0.46)
-                    .rotationEffect(.degrees(-7))
-                    .offset(y: -height * 0.18)
-
                 FullScreenCourtLines()
-                    .stroke(.white.opacity(0.31), lineWidth: 3.2)
-                    .frame(width: width * 1.28, height: height * 0.86)
-                    .offset(x: width * 0.03, y: animate ? height * 0.19 : height * 0.25)
+                    .stroke(.white.opacity(0.26), lineWidth: 2.8)
+                    .frame(width: width * 1.42, height: height * 1.04)
+                    .rotationEffect(.degrees(-8))
+                    .offset(x: -width * 0.04, y: animate ? height * 0.08 : height * 0.14)
                     .scaleEffect(animate ? 1 : 1.04)
                     .animation(.easeOut(duration: 1.2), value: animate)
 
                 Circle()
                     .fill(HLColor.basketballOrange)
-                    .frame(width: 58, height: 58)
+                    .frame(width: 64, height: 64)
                     .overlay(BasketballLines().stroke(HLColor.night.opacity(0.55), lineWidth: 2))
-                    .offset(x: animate ? width * 0.31 : -width * 0.30, y: animate ? -height * 0.18 : -height * 0.34)
+                    .offset(x: animate ? width * 0.33 : -width * 0.28, y: animate ? -height * 0.25 : -height * 0.40)
                     .rotationEffect(.degrees(animate ? 360 : 0))
                     .shadow(color: HLColor.basketballOrange.opacity(0.35), radius: 24)
                     .animation(.spring(response: 1.15, dampingFraction: 0.78).delay(0.18), value: animate)
@@ -228,8 +246,8 @@ struct AnimatedCourtIntro: View {
                     colors: [
                         .black.opacity(0.08),
                         .clear,
-                        .black.opacity(0.34),
-                        .black.opacity(0.56)
+                        .black.opacity(0.18),
+                        .black.opacity(0.62)
                     ],
                     startPoint: .top,
                     endPoint: .bottom

@@ -14,7 +14,7 @@ struct CourtMapView: View {
     @State private var showingDetail = false
     @State private var showingSuggestion = false
 
-    var visibleCourts: [Court] {
+    private var visibleCourts: [Court] {
         let filtered = store.filteredCourts
         guard !searchText.isEmpty else { return filtered }
         return filtered.filter {
@@ -24,147 +24,197 @@ struct CourtMapView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack(alignment: .top) {
-                Map(position: $cameraPosition) {
-                    ForEach(visibleCourts) { court in
-                        Annotation(court.name, coordinate: court.coordinate) {
-                            Button {
+        ZStack {
+            Map(position: $cameraPosition) {
+                ForEach(visibleCourts) { court in
+                    Annotation("", coordinate: court.coordinate) {
+                        Button {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
                                 store.selectedCourt = court
-                            } label: {
-                                CourtPin(court: court, isSelected: store.selectedCourt?.id == court.id)
                             }
-                            .buttonStyle(.plain)
+                        } label: {
+                            CourtPin(court: court, isSelected: store.selectedCourt?.id == court.id)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
-                .mapStyle(.standard(elevation: .flat))
-                .ignoresSafeArea()
+            }
+            .mapStyle(.standard(elevation: .flat, pointsOfInterest: .including([.park, .publicTransport, .school])))
+            .ignoresSafeArea()
 
-                VStack(spacing: 12) {
-                    searchBar
-                    filterChips
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
+            LinearGradient(
+                colors: [.black.opacity(0.32), .clear, .clear, .black.opacity(0.20)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+            .allowsHitTesting(false)
 
-                VStack {
-                    Spacer()
-                    bottomPanel
+            VStack(spacing: 0) {
+                topControlStack
+                Spacer()
+                bottomSurface
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
+            .padding(.bottom, 88)
+        }
+        .sheet(isPresented: $showingFilters) {
+            FilterSheetView()
+                .presentationDetents([.medium, .large])
+        }
+        .sheet(isPresented: $showingDetail) {
+            if let court = store.selectedCourt {
+                CourtDetailView(court: court, showSuggestion: {
+                    showingDetail = false
+                    showingSuggestion = true
+                })
+            }
+        }
+        .sheet(isPresented: $showingSuggestion) {
+            if let court = store.selectedCourt {
+                SuggestEditView(court: court)
+            }
+        }
+    }
+
+    private var topControlStack: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                brandPill
+                Spacer()
+                Button {
+                    showingFilters = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(store.filters.isActive ? HLColor.night : .white)
+                        .frame(width: 48, height: 48)
+                        .background(store.filters.isActive ? HLColor.freshGreen : .black.opacity(0.54))
+                        .clipShape(Circle())
+                        .overlay {
+                            Circle().stroke(.white.opacity(0.13), lineWidth: 1)
+                        }
                 }
+                .buttonStyle(.plain)
             }
-            .sheet(isPresented: $showingFilters) {
-                FilterSheetView()
-                    .presentationDetents([.medium, .large])
-            }
-            .sheet(isPresented: $showingDetail) {
-                if let court = store.selectedCourt {
-                    CourtDetailView(court: court, showSuggestion: {
-                        showingDetail = false
-                        showingSuggestion = true
-                    })
-                }
-            }
-            .sheet(isPresented: $showingSuggestion) {
-                if let court = store.selectedCourt {
-                    SuggestEditView(court: court)
-                }
-            }
+
+            searchBar
+            filterChips
+        }
+    }
+
+    private var brandPill: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "basketball.fill")
+                .foregroundStyle(HLColor.basketballOrange)
+            Text("HoopLife")
+                .font(.headline.weight(.black))
+                .foregroundStyle(.white)
+            Text("\(visibleCourts.count)")
+                .font(.caption.weight(.black))
+                .foregroundStyle(HLColor.night)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(HLColor.freshGreen)
+                .clipShape(Capsule())
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 48)
+        .background(.black.opacity(0.58))
+        .clipShape(Capsule())
+        .overlay {
+            Capsule().stroke(.white.opacity(0.13), lineWidth: 1)
         }
     }
 
     private var searchBar: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(HLColor.secondaryText)
-            TextField("Search court, area, postcode", text: $searchText)
+                .foregroundStyle(.white.opacity(0.64))
+            TextField("Search court or area", text: $searchText)
                 .textInputAutocapitalization(.words)
                 .disableAutocorrection(true)
-            Button {
-                showingFilters = true
-            } label: {
-                Image(systemName: "slider.horizontal.3")
-                    .foregroundStyle(store.filters.isActive ? HLColor.electricBlue : HLColor.text)
+                .foregroundStyle(.white)
+                .tint(HLColor.freshGreen)
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.white.opacity(0.72))
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 14)
-        .frame(height: 54)
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .shadow(color: .black.opacity(0.08), radius: 18, y: 8)
+        .frame(height: 52)
+        .background(.black.opacity(0.54))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.white.opacity(0.13), lineWidth: 1)
+        }
     }
 
     private var filterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                SelectableChip(label: "Outdoor", isSelected: store.filters.outdoor) { store.filters.outdoor.toggle() }
-                SelectableChip(label: "Indoor", isSelected: store.filters.indoor) { store.filters.indoor.toggle() }
-                SelectableChip(label: "Free", isSelected: store.filters.free) { store.filters.free.toggle() }
-                SelectableChip(label: "Lights", isSelected: store.filters.lights) { store.filters.lights.toggle() }
-                SelectableChip(label: "Dry", isSelected: store.filters.dryAfterRain) { store.filters.dryAfterRain.toggle() }
-                SelectableChip(label: "Nets", isSelected: store.filters.nets) { store.filters.nets.toggle() }
-                SelectableChip(label: "Standard rim", isSelected: store.filters.standardRim) { store.filters.standardRim.toggle() }
-                SelectableChip(label: "Solo", isSelected: store.filters.solo) { store.filters.solo.toggle() }
+                MapFilterChip(label: "Outdoor", isSelected: store.filters.outdoor) { store.filters.outdoor.toggle() }
+                MapFilterChip(label: "Indoor", isSelected: store.filters.indoor) { store.filters.indoor.toggle() }
+                MapFilterChip(label: "Free", isSelected: store.filters.free) { store.filters.free.toggle() }
+                MapFilterChip(label: "Lights", isSelected: store.filters.lights) { store.filters.lights.toggle() }
+                MapFilterChip(label: "Dry", isSelected: store.filters.dryAfterRain) { store.filters.dryAfterRain.toggle() }
+                MapFilterChip(label: "Nets", isSelected: store.filters.nets) { store.filters.nets.toggle() }
+                MapFilterChip(label: "Standard rim", isSelected: store.filters.standardRim) { store.filters.standardRim.toggle() }
             }
+            .padding(.trailing, 20)
         }
     }
 
-    private var bottomPanel: some View {
-        VStack(spacing: 14) {
-            Capsule()
-                .fill(HLColor.stroke)
-                .frame(width: 72, height: 5)
-                .padding(.top, 10)
-
+    private var bottomSurface: some View {
+        Group {
             if let court = store.selectedCourt {
-                selectedCourtPreview(court)
+                selectedCourtCard(court)
             } else {
-                nearbyCourtsList
+                courtRail
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 94)
-        .background(
-            LinearGradient(
-                colors: [Color.white.opacity(0.96), Color.white.opacity(0.88)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
-        .clipShape(UnevenRoundedRectangle(topLeadingRadius: 34, topTrailingRadius: 34))
-        .shadow(color: .black.opacity(0.14), radius: 24, y: -6)
     }
 
-    private var nearbyCourtsList: some View {
+    private var courtRail: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Playable nearby")
-                            .font(.title2.weight(.black))
-                        Text("Court facts, not ratings")
-                            .font(.caption.weight(.medium))
-                            .foregroundStyle(HLColor.secondaryText)
-                    }
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Court check")
+                        .font(.title2.weight(.black))
+                        .foregroundStyle(.white)
+                    Text("Facts, not ratings")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white.opacity(0.58))
+                }
                 Spacer()
-                Text("\(visibleCourts.count) in Sheffield")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(HLColor.secondaryText)
+                Text("\(visibleCourts.count) courts")
+                    .font(.subheadline.weight(.black))
+                    .foregroundStyle(HLColor.freshGreen)
             }
 
             if visibleCourts.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("No matching courts")
-                        .font(.headline.weight(.semibold))
+                        .font(.headline.weight(.black))
+                        .foregroundStyle(.white)
                     Text("Try fewer filters or add a missing court.")
-                        .foregroundStyle(HLColor.secondaryText)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.64))
                     Button("Reset filters") {
                         store.filters = CourtFilters()
                     }
-                    .buttonStyle(SecondaryButtonStyle())
+                    .buttonStyle(DarkSecondaryButtonStyle())
                 }
-                .padding()
-                .cardStyle(radius: 20)
+                .padding(16)
+                .background(.black.opacity(0.38))
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -172,30 +222,55 @@ struct CourtMapView: View {
                             CourtCard(court: court, isSaved: store.isSaved(court)) {
                                 store.toggleSaved(court)
                             }
-                            .frame(width: 326)
+                            .frame(width: 304)
                             .onTapGesture {
-                                store.selectedCourt = court
+                                withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
+                                    store.selectedCourt = court
+                                }
                             }
                         }
                     }
-                    .padding(.bottom, 4)
+                    .padding(.bottom, 2)
                 }
             }
         }
+        .padding(16)
+        .background(.black.opacity(0.58))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(.white.opacity(0.13), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.25), radius: 24, y: 10)
     }
 
-    private func selectedCourtPreview(_ court: Court) -> some View {
+    private func selectedCourtCard(_ court: Court) -> some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text(court.name)
                         .font(.title2.weight(.black))
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
                     Text(court.area)
-                        .font(.subheadline)
-                        .foregroundStyle(HLColor.secondaryText)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.white.opacity(0.58))
+                        .lineLimit(1)
                 }
                 Spacer()
-                ConfidenceBadge(confidence: court.confidence)
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.86)) {
+                        store.selectedCourt = nil
+                    }
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.white)
+                        .frame(width: 34, height: 34)
+                        .background(.white.opacity(0.12))
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
             }
 
             FlowLayout(spacing: 8) {
@@ -205,24 +280,29 @@ struct CourtMapView: View {
             }
 
             Text(warningText(for: court))
-                .font(.subheadline)
-                .foregroundStyle(HLColor.secondaryText)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.70))
 
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 Button("Directions") {
                     openDirections(to: court)
                 }
-                .buttonStyle(PrimaryButtonStyle())
-                .frame(maxWidth: .infinity)
+                .buttonStyle(DarkPrimaryButtonStyle())
 
                 Button("Details") {
                     showingDetail = true
                 }
-                .buttonStyle(SecondaryButtonStyle())
-                .frame(maxWidth: .infinity)
+                .buttonStyle(DarkSecondaryButtonStyle())
             }
         }
-        .padding(.bottom, 4)
+        .padding(16)
+        .background(.black.opacity(0.62))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(.white.opacity(0.13), lineWidth: 1)
+        }
+        .shadow(color: .black.opacity(0.25), radius: 24, y: 10)
     }
 
     private func warningText(for court: Court) -> String {
@@ -242,32 +322,55 @@ struct CourtMapView: View {
     }
 }
 
+struct MapFilterChip: View {
+    let label: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.caption.weight(.black))
+                .foregroundStyle(isSelected ? HLColor.night : .white)
+                .padding(.horizontal, 13)
+                .frame(height: 34)
+                .background(isSelected ? HLColor.freshGreen : .black.opacity(0.50))
+                .clipShape(Capsule())
+                .overlay {
+                    Capsule().stroke(.white.opacity(isSelected ? 0 : 0.13), lineWidth: 1)
+                }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct CourtPin: View {
     let court: Court
     let isSelected: Bool
 
     var body: some View {
-        Circle()
-            .fill(fill)
-            .frame(width: isSelected ? 32 : 24, height: isSelected ? 32 : 24)
-            .overlay {
-                Image(systemName: court.courtType == .indoor ? "building.2.fill" : "basketball.fill")
-                    .font(.system(size: isSelected ? 13 : 10, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-            .overlay {
-                Circle().stroke(.white, lineWidth: 3)
-            }
-            .shadow(color: .black.opacity(0.18), radius: 8, y: 4)
+        ZStack {
+            Circle()
+                .fill(isSelected ? HLColor.basketballOrange : fill)
+                .frame(width: isSelected ? 38 : 30, height: isSelected ? 38 : 30)
+                .shadow(color: .black.opacity(0.30), radius: 10, y: 5)
+
+            Image(systemName: court.courtType == .indoor ? "building.2.fill" : "basketball.fill")
+                .font(.system(size: isSelected ? 15 : 12, weight: .black))
+                .foregroundStyle(.white)
+        }
+        .overlay {
+            Circle()
+                .stroke(.white, lineWidth: isSelected ? 4 : 3)
+        }
     }
 
     private var fill: Color {
-        if isSelected { return HLColor.basketballOrange }
         switch court.confidence {
-        case .verified, .recentlyChecked: return HLColor.courtGreen
-        case .needsCheck: return HLColor.warning
-        case .userSuggested: return HLColor.electricBlue
-        case .imported: return HLColor.imported
+        case .verified, .recentlyChecked: HLColor.courtGreen
+        case .needsCheck: HLColor.warning
+        case .userSuggested: HLColor.electricBlue
+        case .imported: HLColor.imported
         }
     }
 }

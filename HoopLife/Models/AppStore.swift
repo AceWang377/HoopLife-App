@@ -54,8 +54,8 @@ final class AppStore: ObservableObject {
         let court = Court(
             id: "user-\(UUID().uuidString)",
             name: name.isEmpty ? "Untitled court" : name,
-            area: area.isEmpty ? "Sheffield" : area,
-            city: "Sheffield",
+            area: area.isEmpty ? "Area pending" : area,
+            city: "Local",
             latitude: latitude,
             longitude: longitude,
             source: .userSuggested,

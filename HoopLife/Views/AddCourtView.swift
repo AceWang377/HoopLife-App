@@ -23,7 +23,7 @@ struct AddCourtView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Add a court")
                             .font(.system(size: 38, weight: .black, design: .rounded))
-                        Text("Drop a missing court into the Sheffield seed set. You can add richer facts after it exists.")
+                        Text("Drop a missing court onto the map. Richer facts can be added after it exists.")
                             .font(.body.weight(.medium))
                             .foregroundStyle(HLColor.secondaryText)
                     }
@@ -78,6 +78,7 @@ struct AddCourtView: View {
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .padding(20)
+                .padding(.bottom, 76)
                 .background(.regularMaterial)
             }
         }
