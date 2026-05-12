@@ -22,8 +22,13 @@ struct AboutDataView: View {
                     }
 
                     SectionCard(title: "What verified means") {
-                        Text("A verified court has been manually checked by HoopLife or a trusted contributor. Imported records are useful starting points, not final truth.")
-                            .foregroundStyle(.white.opacity(0.62))
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("A verified court has been manually checked by HoopLife or a trusted contributor.")
+                                .foregroundStyle(.white.opacity(0.62))
+                            FactRow(title: "Imported", value: "Imported from OpenStreetMap")
+                            FactRow(title: "Status", value: "Not yet verified by HoopLife", tone: .warning)
+                            FactRow(title: "Details", value: "Details may be incomplete", tone: .unknown)
+                        }
                     }
 
                     SectionCard(title: "Sources") {
@@ -37,7 +42,7 @@ struct AboutDataView: View {
                     SectionCard(title: "Current MVP stats") {
                         FactRow(title: "Courts", value: "\(store.courts.count)")
                         FactRow(title: "Verified", value: "\(store.courts.filter { $0.confidence == .verified || $0.confidence == .recentlyChecked }.count)")
-                        FactRow(title: "Edits", value: "\(store.suggestions.count) pending")
+                        FactRow(title: "Imported", value: "\(store.courts.filter { $0.confidence == .imported }.count)")
                     }
                 }
                 .padding(20)

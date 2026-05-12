@@ -35,7 +35,7 @@ struct SavedCourtsView: View {
             }
             .pageBackground()
             .sheet(item: $selectedCourt) { court in
-                CourtDetailView(court: court, showSuggestion: {})
+                CourtDetailView(court: court)
             }
         }
     }

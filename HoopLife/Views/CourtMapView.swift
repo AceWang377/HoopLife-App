@@ -15,10 +15,13 @@ struct CourtMapView: View {
         center: CLLocationCoordinate2D(latitude: 53.3811, longitude: -1.4701),
         span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
     )
+    @State private var searchRegion = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 53.3811, longitude: -1.4701),
+        span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
+    )
     @State private var searchText = ""
     @State private var showingFilters = false
     @State private var showingDetail = false
-    @State private var showingSuggestion = false
     @FocusState private var isSearchFocused: Bool
 
     private var visibleCourts: [Court] {
@@ -30,8 +33,12 @@ struct CourtMapView: View {
         }
     }
 
-    private var cityCourtCount: Int {
-        store.courts.count
+    private var areaCourtCount: Int {
+        visibleCourts.filter { mapRegion.contains($0.coordinate, padding: 0.18) }.count
+    }
+
+    private var shouldShowSearchAreaButton: Bool {
+        !searchRegion.isSimilar(to: mapRegion)
     }
 
     private var mapCourts: [Court] {
@@ -97,29 +104,18 @@ struct CourtMapView: View {
         }
         .sheet(isPresented: $showingDetail) {
             if let court = store.selectedCourt {
-                CourtDetailView(court: court, showSuggestion: {
-                    showingDetail = false
-                    showingSuggestion = true
-                })
-            }
-        }
-        .sheet(isPresented: $showingSuggestion) {
-            if let court = store.selectedCourt {
-                SuggestEditView(court: court)
+                CourtDetailView(court: court)
             }
         }
         .onReceive(locationManager.$lastLocation.compactMap { $0 }) { coordinate in
             withAnimation(.spring(response: 0.38, dampingFraction: 0.88)) {
-                cameraPosition = .region(
-                    MKCoordinateRegion(
-                        center: coordinate,
-                        span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
-                    )
-                )
-                mapRegion = MKCoordinateRegion(
+                let region = MKCoordinateRegion(
                     center: coordinate,
                     span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
                 )
+                cameraPosition = .region(region)
+                mapRegion = region
+                searchRegion = region
             }
         }
     }
@@ -162,6 +158,7 @@ struct CourtMapView: View {
             }
 
             searchBar
+            searchAreaButton
             filterChips
         }
     }
@@ -173,7 +170,7 @@ struct CourtMapView: View {
             Text("HoopLife")
                 .font(.headline.weight(.black))
                 .foregroundStyle(.white)
-            Text("\(cityCourtCount)")
+            Text("\(areaCourtCount)")
                 .font(.caption.weight(.black))
                 .foregroundStyle(HLColor.night)
                 .padding(.horizontal, 8)
@@ -202,7 +199,7 @@ struct CourtMapView: View {
                 .focused($isSearchFocused)
                 .submitLabel(.search)
                 .onSubmit {
-                    isSearchFocused = false
+                    submitSearch()
                 }
             if !searchText.isEmpty {
                 Button {
@@ -238,6 +235,28 @@ struct CourtMapView: View {
                 MapFilterChip(label: "Standard rim", isSelected: store.filters.standardRim) { toggleFilter { store.filters.standardRim.toggle() } }
             }
             .padding(.trailing, 20)
+        }
+    }
+
+    @ViewBuilder
+    private var searchAreaButton: some View {
+        if shouldShowSearchAreaButton {
+            Button {
+                HLHaptics.selection()
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+                    searchRegion = mapRegion
+                    store.selectedCourt = nil
+                }
+            } label: {
+                Label("Search this area", systemImage: "scope")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(HLColor.night)
+                    .padding(.horizontal, 14)
+                    .frame(height: 36)
+                    .background(HLColor.freshGreen)
+                    .clipShape(Capsule())
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -289,19 +308,11 @@ struct CourtMapView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white.opacity(0.70))
 
-            HStack(spacing: 10) {
-                Button("Facts") {
-                    HLHaptics.light()
-                    showingSuggestion = true
-                }
-                .buttonStyle(DarkPrimaryButtonStyle())
-
-                Button("Details") {
-                    HLHaptics.light()
-                    showingDetail = true
-                }
-                .buttonStyle(DarkSecondaryButtonStyle())
+            Button("Details") {
+                HLHaptics.light()
+                showingDetail = true
             }
+            .buttonStyle(DarkPrimaryButtonStyle())
 
             Button("Directions") {
                     HLHaptics.medium()
@@ -324,7 +335,10 @@ struct CourtMapView: View {
             return "May be slippery after rain. Check before travelling."
         }
         if court.hasNets == .unknown || court.rimHeight == .unknown {
-            return "Rim and net details still need confirmation."
+            return court.confidence == .imported ? "Imported from OpenStreetMap. Not yet verified by HoopLife." : "Rim and net details still need confirmation."
+        }
+        if court.confidence == .imported {
+            return "Imported from OpenStreetMap. Details may be incomplete."
         }
         return "Key court facts are ready to check."
     }
@@ -343,6 +357,22 @@ struct CourtMapView: View {
         }
     }
 
+    private func submitSearch() {
+        isSearchFocused = false
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty, !visibleCourts.isEmpty else { return }
+
+        let region = MKCoordinateRegion.enclosing(visibleCourts.map(\.coordinate))
+        guard let region else { return }
+
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.86)) {
+            cameraPosition = .region(region)
+            mapRegion = region
+            searchRegion = region
+            store.selectedCourt = visibleCourts.count == 1 ? visibleCourts[0] : nil
+        }
+    }
+
     private func focusMap(on court: Court) {
         let region = MKCoordinateRegion(
             center: court.coordinate,
@@ -350,6 +380,7 @@ struct CourtMapView: View {
         )
         cameraPosition = .region(region)
         mapRegion = region
+        searchRegion = region
     }
 
     private func locateUser() {
@@ -456,6 +487,30 @@ struct CourtPin: View {
 }
 
 private extension MKCoordinateRegion {
+    static func enclosing(_ coordinates: [CLLocationCoordinate2D]) -> MKCoordinateRegion? {
+        guard let first = coordinates.first else { return nil }
+
+        let bounds = coordinates.reduce((minLat: first.latitude, maxLat: first.latitude, minLon: first.longitude, maxLon: first.longitude)) { result, coordinate in
+            (
+                minLat: min(result.minLat, coordinate.latitude),
+                maxLat: max(result.maxLat, coordinate.latitude),
+                minLon: min(result.minLon, coordinate.longitude),
+                maxLon: max(result.maxLon, coordinate.longitude)
+            )
+        }
+
+        let latitudeDelta = max((bounds.maxLat - bounds.minLat) * 1.45, 0.028)
+        let longitudeDelta = max((bounds.maxLon - bounds.minLon) * 1.45, 0.028)
+
+        return MKCoordinateRegion(
+            center: CLLocationCoordinate2D(
+                latitude: (bounds.minLat + bounds.maxLat) / 2,
+                longitude: (bounds.minLon + bounds.maxLon) / 2
+            ),
+            span: MKCoordinateSpan(latitudeDelta: latitudeDelta, longitudeDelta: longitudeDelta)
+        )
+    }
+
     func contains(_ coordinate: CLLocationCoordinate2D, padding: Double) -> Bool {
         let latitudePadding = span.latitudeDelta * padding
         let longitudePadding = span.longitudeDelta * padding
@@ -468,6 +523,13 @@ private extension MKCoordinateRegion {
             coordinate.latitude <= maxLatitude &&
             coordinate.longitude >= minLongitude &&
             coordinate.longitude <= maxLongitude
+    }
+
+    func isSimilar(to region: MKCoordinateRegion) -> Bool {
+        abs(center.latitude - region.center.latitude) < max(span.latitudeDelta, region.span.latitudeDelta) * 0.10 &&
+            abs(center.longitude - region.center.longitude) < max(span.longitudeDelta, region.span.longitudeDelta) * 0.10 &&
+            abs(span.latitudeDelta - region.span.latitudeDelta) < max(span.latitudeDelta, region.span.latitudeDelta) * 0.25 &&
+            abs(span.longitudeDelta - region.span.longitudeDelta) < max(span.longitudeDelta, region.span.longitudeDelta) * 0.25
     }
 }
 

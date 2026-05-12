@@ -5,7 +5,6 @@ struct CourtDetailView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
     let court: Court
-    var showSuggestion: () -> Void
 
     var body: some View {
         NavigationStack {
@@ -31,8 +30,10 @@ struct CourtDetailView: View {
             }
             .safeAreaInset(edge: .bottom) {
                 HStack(spacing: 12) {
-                    Button("Suggest edit") {
-                        showSuggestion()
+                    Button {
+                        store.toggleSaved(court)
+                    } label: {
+                        Label(store.isSaved(court) ? "Saved" : "Save", systemImage: store.isSaved(court) ? "bookmark.fill" : "bookmark")
                     }
                     .buttonStyle(SecondaryButtonStyle())
 
@@ -94,6 +95,9 @@ struct CourtDetailView: View {
                 }
             }
             ConfidenceBadge(confidence: court.confidence)
+            if court.confidence == .imported {
+                ImportedNotice()
+            }
         }
     }
 
@@ -154,6 +158,9 @@ struct CourtDetailView: View {
             FactRow(title: "Source", value: court.source.displayName)
             FactRow(title: "License", value: court.sourceLicense)
             FactRow(title: "Checked", value: court.lastCheckedAt)
+            if court.confidence == .imported {
+                FactRow(title: "Status", value: "Not yet verified by HoopLife", tone: .warning)
+            }
             Text(court.notes)
                 .font(.footnote)
                 .foregroundStyle(.white.opacity(0.58))
@@ -164,5 +171,26 @@ struct CourtDetailView: View {
         let item = MKMapItem(placemark: MKPlacemark(coordinate: court.coordinate))
         item.name = court.name
         item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking])
+    }
+}
+
+private struct ImportedNotice: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label("Imported from OpenStreetMap", systemImage: "exclamationmark.triangle.fill")
+                .font(.subheadline.weight(.black))
+                .foregroundStyle(HLColor.freshGreen)
+            Text("Not yet verified by HoopLife. Details may be incomplete.")
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.white.opacity(0.66))
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.black.opacity(0.42))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.white.opacity(0.12), lineWidth: 1)
+        }
     }
 }

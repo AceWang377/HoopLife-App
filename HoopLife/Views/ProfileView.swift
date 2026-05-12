@@ -4,6 +4,7 @@ struct ProfileView: View {
     @EnvironmentObject private var store: AppStore
     @State private var passcode = ""
     @State private var adminError = false
+    @State private var showingOwnerTools = false
 
     var body: some View {
         NavigationStack {
@@ -13,14 +14,31 @@ struct ProfileView: View {
                     quickStats
                     librarySection
                     dataSection
-                    Color.clear.frame(height: 52)
-                    adminSection
                 }
                 .padding(20)
                 .padding(.bottom, 150)
             }
             .pageBackground()
             .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showingOwnerTools) {
+                NavigationStack {
+                    ScrollView {
+                        adminSection
+                            .padding(20)
+                            .padding(.bottom, 50)
+                    }
+                    .pageBackground()
+                    .navigationTitle("Owner tools")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            Button("Done") {
+                                showingOwnerTools = false
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -32,6 +50,11 @@ struct ProfileView: View {
             Text("Browse courts without an account. Saved courts stay local to this device for the MVP.")
                 .font(.body.weight(.medium))
                 .foregroundStyle(.white.opacity(0.66))
+        }
+        .contentShape(Rectangle())
+        .onLongPressGesture(minimumDuration: 1.2) {
+            HLHaptics.medium()
+            showingOwnerTools = true
         }
     }
 
@@ -215,7 +238,7 @@ struct TermsView: View {
                     .foregroundStyle(.white)
 
                 SectionCard(title: "MVP promise") {
-                    Text("HoopLife shows practical court facts without requiring a public account. Saved courts and owner-only admin edits are stored on this device in the current MVP.")
+                    Text("HoopLife shows practical court facts without requiring a public account. Saved courts stay on this device in the current MVP.")
                         .foregroundStyle(.white.opacity(0.62))
                 }
 
