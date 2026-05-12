@@ -177,7 +177,7 @@ struct CourtMapView: View {
                 .focused($isSearchFocused)
                 .submitLabel(.search)
                 .onSubmit {
-                    selectFirstVisibleCourt()
+                    isSearchFocused = false
                 }
             if !searchText.isEmpty {
                 Button {
@@ -220,68 +220,8 @@ struct CourtMapView: View {
         Group {
             if let court = store.selectedCourt {
                 selectedCourtCard(court)
-            } else {
-                courtRail
             }
         }
-    }
-
-    private var courtRail: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Court check")
-                        .font(.title2.weight(.black))
-                        .foregroundStyle(.white)
-                    Text("Facts, not ratings")
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.white.opacity(0.58))
-                }
-                Spacer()
-                Text("\(visibleCourts.count) courts")
-                    .font(.subheadline.weight(.black))
-                    .foregroundStyle(HLColor.freshGreen)
-            }
-
-            if visibleCourts.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("No matching courts")
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(.white)
-                    Text("Try fewer filters or add a missing court.")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.64))
-                    Button("Reset filters") {
-                        HLHaptics.medium()
-                        store.filters = CourtFilters()
-                    }
-                    .buttonStyle(DarkSecondaryButtonStyle())
-                }
-                .padding(16)
-                .background(.black.opacity(0.38))
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(visibleCourts) { court in
-                            CourtCard(court: court, isSaved: store.isSaved(court)) {
-                                store.toggleSaved(court)
-                            }
-                            .frame(width: 304)
-                        }
-                    }
-                    .padding(.bottom, 2)
-                }
-            }
-        }
-        .padding(16)
-        .background(.black.opacity(0.58))
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(.white.opacity(0.13), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.25), radius: 24, y: 10)
     }
 
     private func selectedCourtCard(_ court: Court) -> some View {
@@ -375,19 +315,6 @@ struct CourtMapView: View {
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
             update()
             store.selectedCourt = nil
-        }
-    }
-
-    private func selectFirstVisibleCourt() {
-        guard let court = visibleCourts.first else {
-            HLHaptics.light()
-            return
-        }
-        HLHaptics.selection()
-        isSearchFocused = false
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
-            store.selectedCourt = court
-            focusMap(on: court)
         }
     }
 
