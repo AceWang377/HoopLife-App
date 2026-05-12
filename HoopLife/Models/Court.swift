@@ -42,6 +42,14 @@ struct Court: Identifiable, Codable, Hashable {
     var goodForTraining: FactStatus
     var beginnerFriendly: FactStatus
     var notes: String
+    var photoAssetName: String? = nil
+
+    var displayPhotoAssetName: String {
+        guard let photoAssetName, !photoAssetName.isEmpty else {
+            return "CourtDefaultImage"
+        }
+        return photoAssetName
+    }
 
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)

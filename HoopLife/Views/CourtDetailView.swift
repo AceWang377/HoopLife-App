@@ -49,26 +49,28 @@ struct CourtDetailView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [HLColor.courtGreen, Color(red: 0.04, green: 0.19, blue: 0.12)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .frame(height: 180)
-                .overlay(alignment: .bottomLeading) {
-                    CourtLines()
-                        .stroke(.white.opacity(0.24), lineWidth: 2)
-                        .padding(18)
-                }
+            Image(court.displayPhotoAssetName)
+                .resizable()
+                .scaledToFill()
+                .frame(height: 210)
+                .frame(maxWidth: .infinity)
+                .clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
                 .overlay(alignment: .topTrailing) {
-                    Image(systemName: court.courtType == .indoor ? "building.2.fill" : "basketball.fill")
-                        .font(.system(size: 42, weight: .black))
-                        .foregroundStyle(.white.opacity(0.9))
-                        .padding(24)
+                    Label(court.photoAssetName == nil ? "Default image" : "Court photo", systemImage: "photo.fill")
+                        .font(.caption.weight(.black))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(.black.opacity(0.46))
+                        .clipShape(Capsule())
+                        .padding(14)
                 }
+                .overlay {
+                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                        .stroke(.white.opacity(0.34), lineWidth: 1)
+                }
+                .shadow(color: .black.opacity(0.14), radius: 24, y: 12)
 
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {

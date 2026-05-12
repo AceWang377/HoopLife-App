@@ -114,6 +114,7 @@ struct AdminCourtFormView: View {
                     .keyboardType(.decimalPad)
                 TextField("Longitude", text: $draft.longitude)
                     .keyboardType(.decimalPad)
+                TextField("Photo asset name", text: $draft.photoAssetName)
                 picker("Confidence", selection: $draft.confidence)
                 TextField("Last checked", text: $draft.lastCheckedAt)
             }
@@ -254,6 +255,7 @@ struct CourtDraft {
     var city = "Sheffield"
     var latitude = "53.38110"
     var longitude = "-1.47010"
+    var photoAssetName = ""
     var confidence: DataConfidence = .verified
     var lastCheckedAt = CourtDraft.todayString
     var courtType: CourtType = .outdoor
@@ -294,6 +296,7 @@ struct CourtDraft {
         city = court.city
         latitude = String(format: "%.6f", court.latitude)
         longitude = String(format: "%.6f", court.longitude)
+        photoAssetName = court.photoAssetName ?? ""
         confidence = court.confidence
         lastCheckedAt = court.lastCheckedAt
         courtType = court.courtType
@@ -369,7 +372,8 @@ struct CourtDraft {
             goodForPickup: goodForPickup,
             goodForTraining: goodForTraining,
             beginnerFriendly: beginnerFriendly,
-            notes: notes
+            notes: notes,
+            photoAssetName: photoAssetName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : photoAssetName
         )
     }
 
