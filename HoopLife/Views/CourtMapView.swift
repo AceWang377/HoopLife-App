@@ -26,6 +26,10 @@ struct CourtMapView: View {
         }
     }
 
+    private var cityCourtCount: Int {
+        store.courts.count
+    }
+
     var body: some View {
         ZStack {
             Map(position: $cameraPosition) {
@@ -144,7 +148,7 @@ struct CourtMapView: View {
             Text("HoopLife")
                 .font(.headline.weight(.black))
                 .foregroundStyle(.white)
-            Text("\(visibleCourts.count)")
+            Text("\(cityCourtCount)")
                 .font(.caption.weight(.black))
                 .foregroundStyle(HLColor.night)
                 .padding(.horizontal, 8)
@@ -264,13 +268,6 @@ struct CourtMapView: View {
                                 store.toggleSaved(court)
                             }
                             .frame(width: 304)
-                            .onTapGesture {
-                                HLHaptics.selection()
-                                withAnimation(.spring(response: 0.35, dampingFraction: 0.84)) {
-                                    store.selectedCourt = court
-                                    focusMap(on: court)
-                                }
-                            }
                         }
                     }
                     .padding(.bottom, 2)

@@ -97,8 +97,10 @@ struct MainTabView: View {
             FloatingDock(selectedTab: $selectedTab)
                 .padding(.horizontal, 18)
                 .padding(.bottom, 12)
+                .ignoresSafeArea(.keyboard, edges: .bottom)
         }
         .background(HLColor.night.ignoresSafeArea())
+        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 }
 
