@@ -28,7 +28,7 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Profile")
                 .font(.system(size: 38, weight: .black, design: .rounded))
-            Text("No public account needed. Saves, suggestions, and admin edits stay lightweight for the MVP.")
+            Text("Browse courts without an account. Saved courts stay local to this device for the MVP.")
                 .font(.body.weight(.medium))
                 .foregroundStyle(HLColor.secondaryText)
         }
@@ -38,8 +38,12 @@ struct ProfileView: View {
         HStack(spacing: 10) {
             StatTile(value: "\(store.courts.count)", label: "courts")
             StatTile(value: "\(store.savedCourts.count)", label: "saved")
-            StatTile(value: "\(store.suggestions.count)", label: "edits")
+            StatTile(value: "\(verifiedCount)", label: "verified")
         }
+    }
+
+    private var verifiedCount: Int {
+        store.courts.filter { $0.confidence == .verified || $0.confidence == .recentlyChecked }.count
     }
 
     private var librarySection: some View {
@@ -47,9 +51,6 @@ struct ProfileView: View {
             VStack(spacing: 10) {
                 ProfileLink(title: "Saved courts", subtitle: "Your local list", icon: "bookmark.fill") {
                     SavedCourtsView()
-                }
-                ProfileLink(title: "Suggest a new court", subtitle: "Candidate courts stay pending", icon: "plus.circle.fill") {
-                    AddCourtView()
                 }
             }
         }
@@ -86,7 +87,7 @@ struct ProfileView: View {
                     }
                     .buttonStyle(SecondaryButtonStyle())
                 } else {
-                    Text("Unlock only on your own device when you want to update real court facts directly inside the app.")
+                    Text("Hidden owner tool for adding Google Maps checked courts and updating verified facts before a backend exists.")
                         .font(.subheadline.weight(.medium))
                         .foregroundStyle(HLColor.secondaryText)
 
@@ -189,7 +190,7 @@ struct TermsView: View {
                     .font(.system(size: 34, weight: .black, design: .rounded))
 
                 SectionCard(title: "MVP promise") {
-                    Text("HoopLife shows practical court facts, not personal profiles or public ratings. Saved courts and admin unlock state are stored on this device in the current MVP.")
+                    Text("HoopLife shows practical court facts without requiring a public account. Saved courts and owner-only admin edits are stored on this device in the current MVP.")
                         .foregroundStyle(HLColor.secondaryText)
                 }
 
@@ -203,8 +204,8 @@ struct TermsView: View {
                         .foregroundStyle(HLColor.secondaryText)
                 }
 
-                SectionCard(title: "User suggestions") {
-                    Text("Suggestions are treated as pending input and should be reviewed before changing public court facts.")
+                SectionCard(title: "Contributions") {
+                    Text("Public user submissions are planned for a later backend version. The current build keeps browsing open and uses owner-reviewed data only.")
                         .foregroundStyle(HLColor.secondaryText)
                 }
             }
