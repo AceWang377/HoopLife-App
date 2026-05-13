@@ -45,6 +45,9 @@ struct ProfileView: View {
             }
             #endif
         }
+        .task {
+            await store.loadCountrySummaries()
+        }
     }
 
     private var header: some View {
@@ -67,7 +70,7 @@ struct ProfileView: View {
 
     private var quickStats: some View {
         HStack(spacing: 10) {
-            StatTile(value: "\(store.courts.count)", label: store.copy(.courts))
+            StatTile(value: formatCount(store.totalCourtCount), label: store.copy(.courts))
             StatTile(value: "\(store.savedCourts.count)", label: store.copy(.saved))
             StatTile(value: "\(verifiedCount)", label: store.copy(.verified))
         }
@@ -75,6 +78,12 @@ struct ProfileView: View {
 
     private var verifiedCount: Int {
         store.courts.filter { $0.confidence == .verified || $0.confidence == .recentlyChecked }.count
+    }
+
+    private func formatCount(_ value: Int) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 
     private var librarySection: some View {

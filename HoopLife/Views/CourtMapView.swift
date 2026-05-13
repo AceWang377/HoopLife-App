@@ -486,6 +486,16 @@ struct CourtMapView: View {
         let query = normalizedSearchText
         guard !query.isEmpty else { return }
 
+        await store.loadCountrySummaries()
+        if let summary = matchingCountrySummary(for: query) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.86)) {
+                searchText = ""
+                focusMap(on: summary)
+            }
+            await loadRemoteCourtsIfQueryable(in: mapRegion, force: true)
+            return
+        }
+
         let filtered = store.filteredCourts
         let matches = matchingCourts(for: query, in: filtered)
         let cityMatches = cityMatchingCourts(for: query, in: filtered)
@@ -615,18 +625,27 @@ struct CourtMapView: View {
         courts.filter { normalize($0.name) == query }
     }
 
+    private func matchingCountrySummary(for query: String) -> CountryCourtSummary? {
+        store.countrySummaries.first { summary in
+            normalize(summary.countryCode) == query ||
+                normalize(summary.displayName) == query ||
+                normalize(summary.displayName).contains(query)
+        }
+    }
+
     private func normalize(_ value: String) -> String {
         value
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            .lowercased()
             .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
     }
 
     private func geocodeRegion(for query: String) async -> MKCoordinateRegion? {
         let geocoder = CLGeocoder()
         let searchTerms = [
-            "\(query), United Kingdom",
-            query
+            query,
+            "\(query), United Kingdom"
         ]
 
         for term in searchTerms {

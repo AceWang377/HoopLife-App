@@ -55,6 +55,11 @@ final class AppStore: ObservableObject {
         courts.filter { savedCourtIDs.contains($0.id) }
     }
 
+    var totalCourtCount: Int {
+        let remoteTotal = countrySummaries.reduce(0) { $0 + $1.courtCount }
+        return max(remoteTotal, courts.count)
+    }
+
     func completeOnboarding() {
         hasCompletedOnboarding = true
         UserDefaults.standard.set(true, forKey: onboardingKey)
