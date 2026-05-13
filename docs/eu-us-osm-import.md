@@ -62,6 +62,65 @@ US-DC
 
 There is no single reliable `ISO3166-1=EU` country area in OSM. Import EU country-by-country.
 
+For large countries such as France, Germany, Spain, and Italy, Overpass Turbo can time out or return only a partial practical export. For a fuller country import, prefer the Geofabrik PBF workflow below.
+
+### Fuller France Import With Geofabrik PBF
+
+Use this when a country-wide Overpass query returns too few records or times out.
+
+1. Install `osmium-tool`:
+
+```bash
+brew install osmium-tool
+```
+
+2. Download the France PBF from Geofabrik:
+
+```bash
+curl -L \
+  -o ~/Downloads/france-latest.osm.pbf \
+  https://download.geofabrik.de/europe/france-latest.osm.pbf
+```
+
+3. Filter basketball-tagged OSM objects locally:
+
+```bash
+osmium tags-filter \
+  ~/Downloads/france-latest.osm.pbf \
+  n/sport=basketball w/sport=basketball r/sport=basketball \
+  n/basketball=yes w/basketball=yes r/basketball=yes \
+  n/hoops w/hoops r/hoops \
+  n/basketball:hoops w/basketball:hoops r/basketball:hoops \
+  -o ~/Downloads/france_basketball.osm.pbf \
+  --overwrite
+```
+
+4. Export the filtered objects to GeoJSON with OSM attributes preserved:
+
+```bash
+osmium export \
+  ~/Downloads/france_basketball.osm.pbf \
+  --attributes=type,id \
+  -o ~/Downloads/france_basketball.geojson \
+  --overwrite
+```
+
+5. Convert to HoopLife CSV:
+
+```bash
+node scripts/osm_geojson_to_supabase_csv.mjs \
+  --input ~/Downloads/france_basketball.geojson \
+  --output ~/Downloads/france_courts_import.csv \
+  --city "France" \
+  --area "France" \
+  --country "FR" \
+  --batch 2026-05-13
+```
+
+6. Import `france_courts_import.csv` into `public.courts_osm_import_staging`, preview, then merge.
+
+This workflow avoids Overpass API timeouts because the expensive filtering happens on your Mac. It still only returns courts that are actually tagged in OpenStreetMap; OSM cannot provide courts that no mapper has added or tagged as basketball-related.
+
 ### Overpass Template For One EU Country
 
 Replace `FR` and `France`.

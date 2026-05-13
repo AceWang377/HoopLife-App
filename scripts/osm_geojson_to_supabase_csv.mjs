@@ -106,14 +106,14 @@ console.log(`Output: ${outputPath}`);
 
 function featureToCourtRow(feature, options) {
   const properties = feature.properties || {};
-  const coordinates = feature.geometry?.coordinates;
-  if (!Array.isArray(coordinates) || coordinates.length < 2) return null;
+  const coordinates = pointFromGeometry(feature.geometry);
+  if (!coordinates) return null;
 
   const longitude = Number(coordinates[0]);
   const latitude = Number(coordinates[1]);
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
 
-  const osmRef = String(properties["@id"] || feature.id || "").trim();
+  const osmRef = inferOsmRef(properties, feature);
   const { osmType, osmId } = parseOsmRef(osmRef);
   const id = osmType && osmId
     ? `osm-${osmType}-${osmId}`
@@ -227,6 +227,63 @@ function parseOsmRef(ref) {
   const match = String(ref).match(/^(node|way|relation)\/(.+)$/);
   if (!match) return { osmType: "", osmId: "" };
   return { osmType: match[1], osmId: match[2] };
+}
+
+function inferOsmRef(properties, feature) {
+  const rawRef = clean(properties["@id"]) || clean(feature.id);
+  if (rawRef && /^(node|way|relation)\//.test(rawRef)) return rawRef;
+
+  const rawType = clean(properties["@type"]) || clean(properties.type);
+  const rawId = clean(properties["@id"]) || clean(properties.id);
+  if (["node", "way", "relation"].includes(rawType) && rawId) {
+    return `${rawType}/${rawId}`;
+  }
+
+  return rawRef || "";
+}
+
+function pointFromGeometry(geometry) {
+  if (!geometry) return null;
+  if (geometry.type === "Point" && Array.isArray(geometry.coordinates)) {
+    return geometry.coordinates;
+  }
+
+  const positions = [];
+  collectPositions(geometry.coordinates, positions);
+  if (positions.length === 0) return null;
+
+  const bounds = positions.reduce((result, position) => ({
+    minLon: Math.min(result.minLon, position[0]),
+    maxLon: Math.max(result.maxLon, position[0]),
+    minLat: Math.min(result.minLat, position[1]),
+    maxLat: Math.max(result.maxLat, position[1])
+  }), {
+    minLon: positions[0][0],
+    maxLon: positions[0][0],
+    minLat: positions[0][1],
+    maxLat: positions[0][1]
+  });
+
+  return [
+    (bounds.minLon + bounds.maxLon) / 2,
+    (bounds.minLat + bounds.maxLat) / 2
+  ];
+}
+
+function collectPositions(value, positions) {
+  if (!Array.isArray(value)) return;
+  if (
+    value.length >= 2 &&
+    typeof value[0] === "number" &&
+    typeof value[1] === "number"
+  ) {
+    positions.push([value[0], value[1]]);
+    return;
+  }
+
+  for (const item of value) {
+    collectPositions(item, positions);
+  }
 }
 
 function fallbackName(properties, osmType, osmId) {
