@@ -3,6 +3,7 @@ create table if not exists public.courts (
   name text not null,
   area text not null default 'Unknown area',
   city text not null default 'UK',
+  country_code text not null default 'GB',
   latitude double precision not null,
   longitude double precision not null,
   source text not null default 'openStreetMap',

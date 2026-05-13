@@ -108,15 +108,21 @@ struct CourtMapView: View {
             }
         }
         .onReceive(locationManager.$lastLocation.compactMap { $0 }) { coordinate in
+            let region = MKCoordinateRegion(
+                center: coordinate,
+                span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
+            )
             withAnimation(.spring(response: 0.38, dampingFraction: 0.88)) {
-                let region = MKCoordinateRegion(
-                    center: coordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.018, longitudeDelta: 0.018)
-                )
                 cameraPosition = .region(region)
                 mapRegion = region
                 searchRegion = region
             }
+            Task {
+                await store.loadRemoteCourts(in: region, force: true)
+            }
+        }
+        .task {
+            await store.loadRemoteCourts(in: mapRegion)
         }
     }
 
@@ -250,21 +256,29 @@ struct CourtMapView: View {
         if shouldShowSearchAreaButton {
             Button {
                 HLHaptics.selection()
-                withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
-                    searchRegion = mapRegion
-                    searchText = ""
-                    store.selectedCourt = nil
+                Task {
+                    await loadCurrentMapArea(force: true)
                 }
             } label: {
-                Label(store.copy(.searchThisArea), systemImage: "scope")
-                    .font(.caption.weight(.black))
-                    .foregroundStyle(HLColor.night)
-                    .padding(.horizontal, 14)
-                    .frame(height: 36)
-                    .background(HLColor.freshGreen)
-                    .clipShape(Capsule())
+                HStack(spacing: 8) {
+                    if store.isLoadingRemoteCourts {
+                        ProgressView()
+                            .tint(HLColor.night)
+                            .controlSize(.small)
+                    } else {
+                        Image(systemName: "scope")
+                    }
+                    Text(store.copy(.searchThisArea))
+                }
+                .font(.caption.weight(.black))
+                .foregroundStyle(HLColor.night)
+                .padding(.horizontal, 14)
+                .frame(height: 36)
+                .background(HLColor.freshGreen)
+                .clipShape(Capsule())
             }
             .buttonStyle(.plain)
+            .disabled(store.isLoadingRemoteCourts)
         }
     }
 
@@ -381,6 +395,7 @@ struct CourtMapView: View {
                 searchRegion = region
                 store.selectedCourt = nil
             }
+            await store.loadRemoteCourts(in: region, force: true)
             return
         }
 
@@ -392,6 +407,7 @@ struct CourtMapView: View {
                 searchRegion = region
                 store.selectedCourt = exactMatches.count == 1 ? exactMatches[0] : nil
             }
+            await store.loadRemoteCourts(in: region, force: true)
             return
         }
 
@@ -406,6 +422,7 @@ struct CourtMapView: View {
                 searchRegion = region
                 store.selectedCourt = nil
             }
+            await store.loadRemoteCourts(in: region, force: true)
             return
         }
 
@@ -416,7 +433,19 @@ struct CourtMapView: View {
                 searchRegion = region
                 store.selectedCourt = nil
             }
+            await store.loadRemoteCourts(in: region, force: true)
         }
+    }
+
+    @MainActor
+    private func loadCurrentMapArea(force: Bool) async {
+        let region = mapRegion
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+            searchRegion = region
+            searchText = ""
+            store.selectedCourt = nil
+        }
+        await store.loadRemoteCourts(in: region, force: force)
     }
 
     private var normalizedSearchText: String {

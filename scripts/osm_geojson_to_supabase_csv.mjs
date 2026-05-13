@@ -6,6 +6,7 @@ import path from "node:path";
 const DEFAULT_OUTPUT = "courts_import.csv";
 const DEFAULT_CITY = "UK";
 const DEFAULT_AREA = "Unknown area";
+const DEFAULT_COUNTRY_CODE = "GB";
 const OSM_LICENSE = "ODbL - OpenStreetMap contributors";
 
 const columns = [
@@ -13,6 +14,7 @@ const columns = [
   "name",
   "area",
   "city",
+  "country_code",
   "latitude",
   "longitude",
   "source",
@@ -69,6 +71,7 @@ const inputPath = path.resolve(args.input);
 const outputPath = path.resolve(args.output || DEFAULT_OUTPUT);
 const city = args.city || DEFAULT_CITY;
 const fallbackArea = args.area || DEFAULT_AREA;
+const countryCode = args.country || DEFAULT_COUNTRY_CODE;
 const importBatch = args.batch || new Date().toISOString().slice(0, 10);
 const includeUnnamed = args.includeUnnamed ?? true;
 
@@ -79,7 +82,7 @@ const seenCoordinates = new Set();
 const rows = [];
 
 for (const feature of features) {
-  const row = featureToCourtRow(feature, { city, fallbackArea, importBatch, includeUnnamed });
+  const row = featureToCourtRow(feature, { city, fallbackArea, countryCode, importBatch, includeUnnamed });
   if (!row) continue;
 
   const coordinateKey = `${Number(row.latitude).toFixed(6)},${Number(row.longitude).toFixed(6)}`;
@@ -134,6 +137,7 @@ function featureToCourtRow(feature, options) {
     name: nameFromOSM || fallbackName(properties, osmType, osmId),
     area: inferArea(properties, options.fallbackArea),
     city: clean(properties["addr:city"]) || options.city,
+    country_code: clean(properties["addr:country"]) || options.countryCode,
     latitude: fixed(latitude),
     longitude: fixed(longitude),
     source: "openStreetMap",
@@ -194,6 +198,7 @@ function parseArgs(rawArgs) {
     else if (arg === "--output" || arg === "-o") parsed.output = rawArgs[++index];
     else if (arg === "--city") parsed.city = rawArgs[++index];
     else if (arg === "--area") parsed.area = rawArgs[++index];
+    else if (arg === "--country") parsed.country = rawArgs[++index];
     else if (arg === "--batch") parsed.batch = rawArgs[++index];
     else if (arg === "--named-only") parsed.includeUnnamed = false;
     else if (!parsed.input) parsed.input = arg;
@@ -212,6 +217,7 @@ Options:
   -o, --output      Output CSV path. Default: ${DEFAULT_OUTPUT}
   --city            Default city when OSM addr:city is missing. Default: ${DEFAULT_CITY}
   --area            Default area when OSM suburb/neighbourhood is missing. Default: ${DEFAULT_AREA}
+  --country         ISO country code for imported rows. Default: ${DEFAULT_COUNTRY_CODE}
   --batch           Import batch label/date. Default: today
   --named-only      Skip OSM features without a name
 `);

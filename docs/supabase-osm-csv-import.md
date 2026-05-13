@@ -29,6 +29,7 @@ node scripts/osm_geojson_to_supabase_csv.mjs \
   --output /path/to/courts_import.csv \
   --city "Sheffield" \
   --area "Sheffield" \
+  --country "GB" \
   --batch 2026-05-12
 ```
 
@@ -42,6 +43,7 @@ The CSV uses snake_case columns. A future `courts` table should include these co
 - `name`
 - `area`
 - `city`
+- `country_code`
 - `latitude`
 - `longitude`
 - `source`
@@ -66,6 +68,7 @@ The script also outputs HoopLife manual-fact columns such as `dryness_after_rain
 ## 4. Import Rules
 
 - Keep all imported rows as `confidence = imported`.
+- Set `country_code` for every import, for example `GB` for the UK and `CN` for China.
 - Do not mark a court as `verified` until you manually check it.
 - Keep `source_license = ODbL - OpenStreetMap contributors`.
 - Preserve `osm_ref` and `osm_tags_json` so every imported row is traceable.

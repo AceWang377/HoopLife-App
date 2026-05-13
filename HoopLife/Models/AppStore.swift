@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import MapKit
 
 @MainActor
 final class AppStore: ObservableObject {
@@ -26,6 +27,7 @@ final class AppStore: ObservableObject {
     private let adminPasscode = "HOOPLIFE-ADMIN"
     #endif
     private let supabaseCourtService = SupabaseCourtService()
+    private var loadedRemoteRegions: [MKCoordinateRegion] = []
 
     init(courts: [Court] = CourtSeedStore.loadCourts()) {
         #if DEBUG
@@ -89,6 +91,47 @@ final class AppStore: ObservableObject {
         } catch {
             courtDataSource = "Local seed"
             print("HoopLife Supabase court load failed: \(error)")
+        }
+    }
+
+    func loadRemoteCourts(in region: MKCoordinateRegion, force: Bool = false) async {
+        guard !isLoadingRemoteCourts else { return }
+        if !force, hasLoadedRemoteRegion(covering: region) { return }
+
+        isLoadingRemoteCourts = true
+        defer { isLoadingRemoteCourts = false }
+
+        do {
+            let remoteCourts = try await supabaseCourtService.fetchCourts(in: region)
+            guard !remoteCourts.isEmpty else { return }
+            mergeRemoteCourts(remoteCourts)
+            loadedRemoteRegions.append(region.expanded(by: 0.45))
+            courtDataSource = "Supabase area"
+            selectedCourt = selectedCourt.flatMap { selected in
+                courts.first { $0.id == selected.id }
+            }
+            print("HoopLife loaded \(remoteCourts.count) courts for current map area")
+        } catch {
+            print("HoopLife Supabase area load failed: \(error)")
+        }
+    }
+
+    private func mergeRemoteCourts(_ remoteCourts: [Court]) {
+        var merged = Dictionary(uniqueKeysWithValues: courts.map { ($0.id, $0) })
+        for court in remoteCourts {
+            merged[court.id] = court
+        }
+        courts = merged.values.sorted {
+            if $0.city == $1.city { return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+            return $0.city.localizedCaseInsensitiveCompare($1.city) == .orderedAscending
+        }
+    }
+
+    private func hasLoadedRemoteRegion(covering region: MKCoordinateRegion) -> Bool {
+        loadedRemoteRegions.contains { loadedRegion in
+            loadedRegion.contains(region.center) &&
+                loadedRegion.span.latitudeDelta >= region.span.latitudeDelta * 0.70 &&
+                loadedRegion.span.longitudeDelta >= region.span.longitudeDelta * 0.70
         }
     }
 
@@ -163,3 +206,27 @@ struct CourtCandidate: Identifiable, Hashable {
     var submittedAt = Date()
 }
 #endif
+
+private extension MKCoordinateRegion {
+    func expanded(by ratio: Double) -> MKCoordinateRegion {
+        MKCoordinateRegion(
+            center: center,
+            span: MKCoordinateSpan(
+                latitudeDelta: span.latitudeDelta * (1 + ratio),
+                longitudeDelta: span.longitudeDelta * (1 + ratio)
+            )
+        )
+    }
+
+    func contains(_ coordinate: CLLocationCoordinate2D) -> Bool {
+        let minLatitude = center.latitude - span.latitudeDelta / 2
+        let maxLatitude = center.latitude + span.latitudeDelta / 2
+        let minLongitude = center.longitude - span.longitudeDelta / 2
+        let maxLongitude = center.longitude + span.longitudeDelta / 2
+
+        return coordinate.latitude >= minLatitude &&
+            coordinate.latitude <= maxLatitude &&
+            coordinate.longitude >= minLongitude &&
+            coordinate.longitude <= maxLongitude
+    }
+}

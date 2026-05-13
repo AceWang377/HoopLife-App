@@ -1,4 +1,5 @@
 import Foundation
+import MapKit
 
 enum SupabaseConfig {
     static let projectURL = URL(string: "https://mcvqmgzsklltrikuuigh.supabase.co")!
@@ -6,6 +7,8 @@ enum SupabaseConfig {
 }
 
 struct SupabaseCourtService {
+    private let maximumViewportLimit = 700
+
     func fetchCourts(limit: Int = 10_000) async throws -> [Court] {
         let pageSize = 1_000
         var allCourts: [Court] = []
@@ -19,6 +22,17 @@ struct SupabaseCourtService {
         }
 
         return allCourts
+    }
+
+    func fetchCourts(in region: MKCoordinateRegion, limit: Int = 600, countryCode: String? = nil) async throws -> [Court] {
+        let boundedLimit = min(max(limit, 1), maximumViewportLimit)
+
+        do {
+            return try await fetchCourtsInViewRPC(region: region, limit: boundedLimit, countryCode: countryCode)
+        } catch {
+            print("HoopLife Supabase RPC viewport load failed, falling back to REST bbox: \(error)")
+            return try await fetchCourtsInBoundingBox(region: region, limit: boundedLimit, countryCode: countryCode)
+        }
     }
 
     private func fetchCourtPage(limit: Int, offset: Int) async throws -> [Court] {
@@ -54,12 +68,120 @@ struct SupabaseCourtService {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return try decoder.decode([SupabaseCourtDTO].self, from: data).map(\.court)
     }
+
+    private func fetchCourtsInViewRPC(region: MKCoordinateRegion, limit: Int, countryCode: String?) async throws -> [Court] {
+        let bounds = region.bounds
+        let url = SupabaseConfig.projectURL.appending(path: "/rest/v1/rpc/courts_in_view")
+        let payload = CourtsInViewRequest(
+            minLat: bounds.minLatitude,
+            minLng: bounds.minLongitude,
+            maxLat: bounds.maxLatitude,
+            maxLng: bounds.maxLongitude,
+            limitCount: limit,
+            countryCodeFilter: countryCode
+        )
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(SupabaseConfig.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(SupabaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder.snakeCase.encode(payload)
+
+        return try await performCourtRequest(request)
+    }
+
+    private func fetchCourtsInBoundingBox(region: MKCoordinateRegion, limit: Int, countryCode: String?) async throws -> [Court] {
+        let bounds = region.bounds
+        var queryItems = [
+            URLQueryItem(name: "select", value: SupabaseCourtDTO.selectColumns),
+            URLQueryItem(name: "latitude", value: "gte.\(bounds.minLatitude)"),
+            URLQueryItem(name: "latitude", value: "lte.\(bounds.maxLatitude)"),
+            URLQueryItem(name: "longitude", value: "gte.\(bounds.minLongitude)"),
+            URLQueryItem(name: "longitude", value: "lte.\(bounds.maxLongitude)"),
+            URLQueryItem(name: "order", value: "name.asc"),
+            URLQueryItem(name: "limit", value: String(limit))
+        ]
+
+        if let countryCode {
+            queryItems.append(URLQueryItem(name: "country_code", value: "eq.\(countryCode)"))
+        }
+
+        var components = URLComponents(
+            url: SupabaseConfig.projectURL.appending(path: "/rest/v1/courts"),
+            resolvingAgainstBaseURL: false
+        )
+        components?.queryItems = queryItems
+
+        guard let url = components?.url else {
+            throw SupabaseCourtError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.setValue(SupabaseConfig.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(SupabaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        return try await performCourtRequest(request)
+    }
+
+    private func performCourtRequest(_ request: URLRequest) async throws -> [Court] {
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw SupabaseCourtError.invalidResponse
+        }
+        guard 200..<300 ~= httpResponse.statusCode else {
+            throw SupabaseCourtError.requestFailed(statusCode: httpResponse.statusCode)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode([SupabaseCourtDTO].self, from: data).map(\.court)
+    }
 }
 
 enum SupabaseCourtError: Error {
     case invalidURL
     case invalidResponse
     case requestFailed(statusCode: Int)
+}
+
+private struct CourtsInViewRequest: Encodable {
+    var minLat: Double
+    var minLng: Double
+    var maxLat: Double
+    var maxLng: Double
+    var limitCount: Int
+    var countryCodeFilter: String?
+}
+
+private extension JSONEncoder {
+    static var snakeCase: JSONEncoder {
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        return encoder
+    }
+}
+
+private extension MKCoordinateRegion {
+    var bounds: CourtBounds {
+        let latitudeDelta = max(span.latitudeDelta, 0.001)
+        let longitudeDelta = max(span.longitudeDelta, 0.001)
+        return CourtBounds(
+            minLatitude: center.latitude - latitudeDelta / 2,
+            minLongitude: center.longitude - longitudeDelta / 2,
+            maxLatitude: center.latitude + latitudeDelta / 2,
+            maxLongitude: center.longitude + longitudeDelta / 2
+        )
+    }
+}
+
+private struct CourtBounds {
+    var minLatitude: Double
+    var minLongitude: Double
+    var maxLatitude: Double
+    var maxLongitude: Double
 }
 
 private struct SupabaseCourtDTO: Decodable {
