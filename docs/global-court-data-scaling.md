@@ -101,6 +101,8 @@ node scripts/osm_geojson_to_supabase_csv.mjs \
 ## 4. Import Rules
 
 - Import new country files only after `global_court_scaling.sql` has been run.
+- Import generated OSM CSV files into `public.courts_osm_import_staging`, not directly into `public.courts`.
+- Use `supabase/osm_country_import_staging.sql` to create the staging table, preview duplicates, and merge approved rows.
 - Keep `source_license = ODbL - OpenStreetMap contributors`.
 - Keep `confidence = imported`.
 - Keep `osm_type`, `osm_id`, `osm_ref`, and `osm_tags_json`.
@@ -119,13 +121,10 @@ For large datasets:
 
 ## 6. Optional Staging Table
 
-For repeated imports, create a staging table and inspect rows before merging:
+For repeated imports, use:
 
-```sql
-drop table if exists public.courts_import_staging;
-
-create table public.courts_import_staging
-(like public.courts including defaults excluding constraints excluding indexes);
+```text
+supabase/osm_country_import_staging.sql
 ```
 
-Import CSV into `public.courts_import_staging`, inspect it, then merge approved rows into `public.courts`.
+The enrichment tables such as `court_name_enrichment` are only for updating existing names/postcodes. They are not for importing new courts.

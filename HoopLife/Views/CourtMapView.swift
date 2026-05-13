@@ -27,6 +27,13 @@ struct CourtMapView: View {
     @State private var isChromeVisible = false
     @FocusState private var isSearchFocused: Bool
 
+    private let maximumQueryableLatitudeDelta = 1.6
+    private let maximumQueryableLongitudeDelta = 1.9
+
+    private var isMapRegionQueryable: Bool {
+        isQueryable(mapRegion)
+    }
+
     private var visibleCourts: [Court] {
         let filtered = store.filteredCourts
         let query = normalizedSearchText
@@ -36,14 +43,26 @@ struct CourtMapView: View {
     }
 
     private var areaCourtCount: Int {
+        guard isMapRegionQueryable else { return 0 }
         visibleCourts.filter { mapRegion.contains($0.coordinate, padding: 0.18) }.count
     }
 
+    private var areaCourtCountLabel: String {
+        isMapRegionQueryable ? "\(areaCourtCount)" : "..."
+    }
+
     private var shouldShowSearchAreaButton: Bool {
-        !searchRegion.isSimilar(to: mapRegion)
+        isMapRegionQueryable && !searchRegion.isSimilar(to: mapRegion)
     }
 
     private var mapCourts: [Court] {
+        guard isMapRegionQueryable else {
+            if let selectedCourt = store.selectedCourt, mapRegion.contains(selectedCourt.coordinate, padding: 0.18) {
+                return [selectedCourt]
+            }
+            return []
+        }
+
         let regionCourts = visibleCourts
             .filter { mapRegion.contains($0.coordinate, padding: 0.18) }
             .sorted {
@@ -133,7 +152,7 @@ struct CourtMapView: View {
             withAnimation(.smooth(duration: 0.42)) {
                 isChromeVisible = true
             }
-            await store.loadRemoteCourts(in: mapRegion)
+            await loadRemoteCourtsIfQueryable(in: mapRegion, force: false)
         }
     }
 
@@ -176,6 +195,7 @@ struct CourtMapView: View {
 
             searchBar
             searchAreaButton
+            mapScaleHintPill
             remoteLoadingPill
             filterChips
         }
@@ -188,7 +208,7 @@ struct CourtMapView: View {
             Text("HoopLife")
                 .font(.headline.weight(.black))
                 .foregroundStyle(.white)
-            Text("\(areaCourtCount)")
+            Text(areaCourtCountLabel)
                 .font(.caption.weight(.black))
                 .foregroundStyle(HLColor.night)
                 .padding(.horizontal, 8)
@@ -295,8 +315,25 @@ struct CourtMapView: View {
     }
 
     @ViewBuilder
+    private var mapScaleHintPill: some View {
+        if !isMapRegionQueryable {
+            Label(mapScaleHintText, systemImage: "plus.magnifyingglass")
+                .font(.caption.weight(.black))
+                .foregroundStyle(.white.opacity(0.84))
+                .padding(.horizontal, 12)
+                .frame(height: 34)
+                .background(.black.opacity(0.46))
+                .clipShape(Capsule())
+                .overlay {
+                    Capsule().stroke(.white.opacity(0.12), lineWidth: 1)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.96)))
+        }
+    }
+
+    @ViewBuilder
     private var remoteLoadingPill: some View {
-        if store.isLoadingRemoteCourts && !shouldShowSearchAreaButton {
+        if store.isLoadingRemoteCourts && isMapRegionQueryable && !shouldShowSearchAreaButton {
             HStack(spacing: 8) {
                 ProgressView()
                     .tint(HLColor.freshGreen)
@@ -431,7 +468,7 @@ struct CourtMapView: View {
                 searchRegion = region
                 store.selectedCourt = nil
             }
-            await store.loadRemoteCourts(in: region, force: true)
+            await loadRemoteCourtsIfQueryable(in: region, force: true)
             return
         }
 
@@ -443,7 +480,7 @@ struct CourtMapView: View {
                 searchRegion = region
                 store.selectedCourt = exactMatches.count == 1 ? exactMatches[0] : nil
             }
-            await store.loadRemoteCourts(in: region, force: true)
+            await loadRemoteCourtsIfQueryable(in: region, force: true)
             return
         }
 
@@ -458,7 +495,7 @@ struct CourtMapView: View {
                 searchRegion = region
                 store.selectedCourt = nil
             }
-            await store.loadRemoteCourts(in: region, force: true)
+            await loadRemoteCourtsIfQueryable(in: region, force: true)
             return
         }
 
@@ -469,19 +506,37 @@ struct CourtMapView: View {
                 searchRegion = region
                 store.selectedCourt = nil
             }
-            await store.loadRemoteCourts(in: region, force: true)
+            await loadRemoteCourtsIfQueryable(in: region, force: true)
         }
     }
 
     @MainActor
     private func loadCurrentMapArea(force: Bool) async {
         let region = mapRegion
+        guard isQueryable(region) else { return }
         withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
             searchRegion = region
             searchText = ""
             store.selectedCourt = nil
         }
+        await loadRemoteCourtsIfQueryable(in: region, force: force)
+    }
+
+    private func loadRemoteCourtsIfQueryable(in region: MKCoordinateRegion, force: Bool) async {
+        guard isQueryable(region) else { return }
         await store.loadRemoteCourts(in: region, force: force)
+    }
+
+    private var mapScaleHintText: String {
+        switch store.appLanguage {
+        case .english: "Zoom in or search a city"
+        case .simplifiedChinese: "放大地图或搜索城市"
+        }
+    }
+
+    private func isQueryable(_ region: MKCoordinateRegion) -> Bool {
+        region.span.latitudeDelta <= maximumQueryableLatitudeDelta &&
+            region.span.longitudeDelta <= maximumQueryableLongitudeDelta
     }
 
     private var normalizedSearchText: String {
