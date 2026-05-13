@@ -79,23 +79,27 @@ Review the output before importing it.
 
 ## Step 3: Create Staging Table in Supabase
 
-Run this once in Supabase SQL Editor:
+Run this once in Supabase SQL Editor.
+
+If you already created a failed staging table, drop and recreate it so the CSV headers match exactly.
 
 ```sql
-create table if not exists public.court_postcode_enrichment (
+drop table if exists public.court_name_enrichment;
+
+create table public.court_name_enrichment (
   id text primary key,
   suggested_name text,
   resolved_postcode text,
   resolved_place_name text,
   postcode_source text,
-  postcode_distance_m integer,
+  postcode_distance_m text,
   suggested_area text,
   suggested_city text,
   created_at timestamptz not null default now()
 );
 ```
 
-Then import `court_postcode_enrichment.csv` into this staging table.
+Then import `court_postcode_enrichment_latest.csv` into `public.court_name_enrichment`.
 
 ## Step 4: Preview the Update
 
@@ -114,7 +118,7 @@ select
   e.postcode_source,
   e.postcode_distance_m
 from public.courts c
-join public.court_postcode_enrichment e on e.id = c.id
+join public.court_name_enrichment e on e.id = c.id
 where e.suggested_name is not null
 order by e.postcode_distance_m nulls last
 limit 100;
@@ -160,7 +164,7 @@ set
     end
   ),
   updated_at = now()
-from public.court_postcode_enrichment e
+from public.court_name_enrichment e
 where c.id = e.id
   and c.source = 'openStreetMap';
 ```
