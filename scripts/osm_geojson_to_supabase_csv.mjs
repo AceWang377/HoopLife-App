@@ -116,7 +116,7 @@ function featureToCourtRow(feature, options) {
     ? `osm-${osmType}-${osmId}`
     : `osm-${slug(`${latitude}-${longitude}`)}`;
 
-  const nameFromOSM = clean(properties.name);
+  const nameFromOSM = clean(properties.name) || clean(properties.official_name);
   if (!nameFromOSM && !options.includeUnnamed) return null;
 
   const leisure = clean(properties.leisure);
@@ -131,7 +131,7 @@ function featureToCourtRow(feature, options) {
 
   return {
     id,
-    name: nameFromOSM || fallbackName(osmType, osmId),
+    name: nameFromOSM || fallbackName(properties, osmType, osmId),
     area: inferArea(properties, options.fallbackArea),
     city: clean(properties["addr:city"]) || options.city,
     latitude: fixed(latitude),
@@ -171,7 +171,8 @@ function featureToCourtRow(feature, options) {
     beginner_friendly: "unknown",
     notes: [
       `Imported from OpenStreetMap${osmRef ? ` (${osmRef})` : ""}.`,
-      nameFromOSM ? "" : "Name is missing in OSM and should be manually reviewed.",
+      clean(properties["addr:postcode"]) ? `Postcode from OSM: ${clean(properties["addr:postcode"])}.` : "",
+      nameFromOSM ? "" : "Name is missing in OSM; app will show an address-based fallback when possible.",
       sourceTag ? `OSM source tag: ${sourceTag}.` : ""
     ].filter(Boolean).join(" "),
     photo_asset_name: "",
@@ -222,9 +223,21 @@ function parseOsmRef(ref) {
   return { osmType: match[1], osmId: match[2] };
 }
 
-function fallbackName(osmType, osmId) {
-  if (osmType && osmId) return `OSM Basketball Court ${osmId}`;
-  return "OSM Basketball Court";
+function fallbackName(properties, osmType, osmId) {
+  const operator = clean(properties.operator);
+  if (operator) return `${operator} basketball court`;
+
+  const postcode = clean(properties["addr:postcode"]);
+  if (postcode) return `Basketball court near ${postcode}`;
+
+  const street = clean(properties["addr:street"]);
+  if (street) return `Basketball court near ${street}`;
+
+  const neighbourhood = clean(properties["addr:neighbourhood"]) || clean(properties["addr:suburb"]);
+  if (neighbourhood) return `Basketball court in ${neighbourhood}`;
+
+  if (osmType && osmId) return `Basketball court (${osmType}/${osmId})`;
+  return "Basketball court";
 }
 
 function inferArea(properties, fallbackArea) {

@@ -43,6 +43,9 @@ struct Court: Identifiable, Codable, Hashable {
     var beginnerFriendly: FactStatus
     var notes: String
     var photoAssetName: String? = nil
+    var addressLine: String? = nil
+    var postcode: String? = nil
+    var osmRef: String? = nil
 
     var displayPhotoAssetName: String {
         guard let photoAssetName, !photoAssetName.isEmpty else {

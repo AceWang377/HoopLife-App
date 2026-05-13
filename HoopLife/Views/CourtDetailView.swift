@@ -12,6 +12,7 @@ struct CourtDetailView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     quickFacts
+                    locationFacts
                     playingConditions
                     rimAndHoop
                     accessAndTiming
@@ -112,6 +113,17 @@ struct CourtDetailView: View {
         }
     }
 
+    private var locationFacts: some View {
+        SectionCard(title: "Location") {
+            FactRow(title: "Area", value: court.area)
+            FactRow(title: "City", value: court.city)
+            FactRow(title: "Postcode", value: court.postcode ?? "Not available", tone: court.postcode == nil ? .unknown : .neutral)
+            if let addressLine = court.addressLine {
+                FactRow(title: "Address", value: addressLine)
+            }
+        }
+    }
+
     private var playingConditions: some View {
         SectionCard(title: "Playing conditions") {
             FactRow(title: "Surface", value: court.surfaceType.displayName)
@@ -158,6 +170,9 @@ struct CourtDetailView: View {
             FactRow(title: "Source", value: court.source.displayName)
             FactRow(title: "License", value: court.sourceLicense)
             FactRow(title: "Checked", value: court.lastCheckedAt)
+            if let osmRef = court.osmRef {
+                FactRow(title: "OSM ref", value: osmRef)
+            }
             if court.confidence == .imported {
                 FactRow(title: "Status", value: "Not yet verified by HoopLife", tone: .warning)
             }

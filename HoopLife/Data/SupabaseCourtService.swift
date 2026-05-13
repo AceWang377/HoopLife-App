@@ -104,7 +104,9 @@ private struct SupabaseCourtDTO: Decodable {
         "good_for_training",
         "beginner_friendly",
         "notes",
-        "photo_asset_name"
+        "photo_asset_name",
+        "osm_ref",
+        "osm_tags_json"
     ].joined(separator: ",")
 
     var id: String
@@ -148,13 +150,15 @@ private struct SupabaseCourtDTO: Decodable {
     var beginnerFriendly: String?
     var notes: String?
     var photoAssetName: String?
+    var osmRef: String?
+    var osmTagsJson: [String: String]?
 
     var court: Court {
         Court(
             id: id,
-            name: clean(name, fallback: "Unnamed court"),
-            area: clean(area, fallback: "Unknown area"),
-            city: clean(city, fallback: "UK"),
+            name: displayName,
+            area: displayArea,
+            city: displayCity,
             latitude: latitude,
             longitude: longitude,
             source: enumValue(DataSource.self, source, fallback: .openStreetMap),
@@ -191,8 +195,89 @@ private struct SupabaseCourtDTO: Decodable {
             goodForTraining: enumValue(FactStatus.self, goodForTraining, fallback: .unknown),
             beginnerFriendly: enumValue(FactStatus.self, beginnerFriendly, fallback: .unknown),
             notes: clean(notes, fallback: ""),
-            photoAssetName: cleanOptional(photoAssetName)
+            photoAssetName: cleanOptional(photoAssetName),
+            addressLine: addressLine,
+            postcode: postcode,
+            osmRef: cleanOptional(osmRef)
         )
+    }
+
+    private var displayName: String {
+        if let cleanedName = cleanOptional(name), !isSyntheticOSMName(cleanedName) {
+            return cleanedName
+        }
+
+        if let osmName = cleanOptional(osmTagsJson?["name"]) ?? cleanOptional(osmTagsJson?["official_name"]) {
+            return osmName
+        }
+
+        if let operatorName = cleanOptional(osmTagsJson?["operator"]) {
+            return "\(operatorName) basketball court"
+        }
+
+        if let addressLabel = cleanOptional(postcode) ?? cleanOptional(streetOrArea) {
+            return "Basketball court near \(addressLabel)"
+        }
+
+        if let osmRef = cleanOptional(osmRef) {
+            return "Basketball court (\(osmRef))"
+        }
+
+        return clean(name, fallback: "Unnamed basketball court")
+    }
+
+    private var displayArea: String {
+        if let existingArea = cleanOptional(area), !isGenericLocation(existingArea) {
+            return existingArea
+        }
+
+        return cleanOptional(osmTagsJson?["addr:suburb"]) ??
+            cleanOptional(osmTagsJson?["addr:neighbourhood"]) ??
+            cleanOptional(osmTagsJson?["addr:district"]) ??
+            cleanOptional(osmTagsJson?["addr:street"]) ??
+            cleanOptional(osmTagsJson?["operator"]) ??
+            clean(area, fallback: "Unknown area")
+    }
+
+    private var displayCity: String {
+        if let existingCity = cleanOptional(city), !isGenericLocation(existingCity) {
+            return existingCity
+        }
+
+        return cleanOptional(osmTagsJson?["addr:city"]) ??
+            cleanOptional(osmTagsJson?["addr:town"]) ??
+            cleanOptional(osmTagsJson?["addr:village"]) ??
+            clean(city, fallback: "UK")
+    }
+
+    private var postcode: String? {
+        cleanOptional(osmTagsJson?["addr:postcode"])
+    }
+
+    private var streetOrArea: String? {
+        cleanOptional(osmTagsJson?["addr:street"]) ??
+            cleanOptional(osmTagsJson?["addr:suburb"]) ??
+            cleanOptional(osmTagsJson?["addr:neighbourhood"]) ??
+            cleanOptional(osmTagsJson?["addr:city"])
+    }
+
+    private var addressLine: String? {
+        let streetAddress = [
+            cleanOptional(osmTagsJson?["addr:housenumber"]),
+            cleanOptional(osmTagsJson?["addr:street"])
+        ]
+            .compactMap(\.self)
+            .joined(separator: " ")
+
+        let parts = [
+            cleanOptional(streetAddress),
+            cleanOptional(osmTagsJson?["addr:suburb"]),
+            cleanOptional(osmTagsJson?["addr:city"]),
+            postcode
+        ]
+            .compactMap(\.self)
+
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
     }
 
     private func clean(_ value: String?, fallback: String) -> String {
@@ -206,6 +291,16 @@ private struct SupabaseCourtDTO: Decodable {
         guard let value else { return nil }
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func isSyntheticOSMName(_ value: String) -> Bool {
+        value.localizedCaseInsensitiveContains("OSM Basketball Court") ||
+            value.localizedCaseInsensitiveContains("Unnamed court")
+    }
+
+    private func isGenericLocation(_ value: String) -> Bool {
+        let normalized = value.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return normalized == "uk" || normalized == "unknown area"
     }
 
     private func enumValue<Value: RawRepresentable>(_ type: Value.Type, _ rawValue: String?, fallback: Value) -> Value where Value.RawValue == String {
