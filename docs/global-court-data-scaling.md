@@ -47,6 +47,7 @@ The local cache is intentionally a visited-area cache, not a full global databas
 ## 3. Importing China OSM Data
 
 China-wide Overpass queries can time out. Prefer province-by-province or city-by-city exports.
+For EU and US import templates, see `docs/eu-us-osm-import.md`.
 
 Example broad query:
 

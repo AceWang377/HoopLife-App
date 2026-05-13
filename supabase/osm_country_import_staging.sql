@@ -12,7 +12,8 @@ create extension if not exists postgis with schema extensions;
 drop table if exists public.courts_osm_import_staging;
 
 create table public.courts_osm_import_staging (
-  id text primary key,
+  staging_row_id bigserial primary key,
+  id text not null,
   name text not null,
   area text not null default 'Unknown area',
   city text not null default 'Unknown city',
@@ -62,6 +63,12 @@ create table public.courts_osm_import_staging (
   import_batch text
 );
 
+create index if not exists courts_osm_import_staging_id_idx
+on public.courts_osm_import_staging (id);
+
+create index if not exists courts_osm_import_staging_country_idx
+on public.courts_osm_import_staging (country_code);
+
 -- After creating this table, import your generated CSV into:
 -- public.courts_osm_import_staging
 
@@ -69,6 +76,8 @@ create table public.courts_osm_import_staging (
 select
   country_code,
   count(*) as staging_rows,
+  count(distinct id) as distinct_osm_rows,
+  count(*) - count(distinct id) as duplicate_rows_in_staging,
   count(*) filter (where name ilike 'OSM Basketball Court%') as synthetic_names,
   count(*) filter (where latitude is null or longitude is null) as missing_coordinates
 from public.courts_osm_import_staging
@@ -100,6 +109,12 @@ limit 100;
 
 -- Merge only rows that are not already present by stable OSM id and are not
 -- within 12 metres of an existing court in the same country.
+with deduped_staging as (
+  select distinct on (id)
+    *
+  from public.courts_osm_import_staging
+  order by id, staging_row_id
+)
 insert into public.courts (
   id,
   name,
@@ -199,7 +214,7 @@ select
   s.osm_ref,
   s.osm_tags_json,
   s.import_batch
-from public.courts_osm_import_staging s
+from deduped_staging s
 where not exists (
     select 1
     from public.courts c
