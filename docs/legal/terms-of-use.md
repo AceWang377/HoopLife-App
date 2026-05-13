@@ -42,4 +42,4 @@ HoopLife is provided as is and as available. To the fullest extent permitted by 
 
 ## Contact
 
-For support, use the support URL listed on the App Store product page.
+For support, email admin@acezerotrading.com or use the support URL listed on the App Store product page.

@@ -44,4 +44,4 @@ If HoopLife adds accounts, submissions, analytics, payments, or other data colle
 
 ## Contact
 
-For privacy questions, contact the HoopLife developer through the support URL listed on the App Store product page.
+For privacy questions, email admin@acezerotrading.com or use the support URL listed on the App Store product page.

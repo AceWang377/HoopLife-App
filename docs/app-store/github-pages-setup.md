@@ -10,6 +10,7 @@ After GitHub Pages is enabled, use these URLs in App Store Connect:
 - Privacy Policy URL: `https://acewang377.github.io/HoopLife-App/privacy/`
 - Terms of Use URL: `https://acewang377.github.io/HoopLife-App/terms/`
 - Landing page: `https://acewang377.github.io/HoopLife-App/`
+- Support email: `admin@acezerotrading.com`
 
 ## Enable GitHub Pages
 

@@ -59,8 +59,9 @@ No demo account is required.
 
 ## URLs To Provide In App Store Connect
 
-- Privacy Policy URL: host `docs/legal/privacy-policy.md` publicly before submission.
-- Support URL: provide a public support page or contact page before submission.
+- Privacy Policy URL: `https://acewang377.github.io/HoopLife-App/privacy/`
+- Support URL: `https://acewang377.github.io/HoopLife-App/support/`
+- Support email: `admin@acezerotrading.com`
 - Marketing URL: optional.
 - Privacy Choices URL: optional for this release, because there is no account and no in-app data deletion workflow.
 
