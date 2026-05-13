@@ -17,6 +17,7 @@ struct SupabaseCourtService {
         request.setValue("Bearer \(SupabaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 12
         request.httpBody = Data("{}".utf8)
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -78,6 +79,7 @@ struct SupabaseCourtService {
         request.setValue(SupabaseConfig.publishableKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(SupabaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 12
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
@@ -110,6 +112,7 @@ struct SupabaseCourtService {
         request.setValue("Bearer \(SupabaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 12
         request.httpBody = try JSONEncoder.snakeCase.encode(payload)
 
         return try await performCourtRequest(request)
@@ -145,6 +148,7 @@ struct SupabaseCourtService {
         request.setValue(SupabaseConfig.publishableKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(SupabaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 12
 
         return try await performCourtRequest(request)
     }

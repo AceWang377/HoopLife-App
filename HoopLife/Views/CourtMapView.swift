@@ -174,7 +174,9 @@ struct CourtMapView: View {
             withAnimation(.smooth(duration: 0.42)) {
                 isChromeVisible = true
             }
-            await store.loadCountrySummaries()
+            Task {
+                await store.loadCountrySummaries()
+            }
             await loadRemoteCourtsIfQueryable(in: mapRegion, force: false)
         }
         .onDisappear {
