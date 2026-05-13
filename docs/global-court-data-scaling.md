@@ -33,12 +33,16 @@ The app should not download all courts.
 The production reading flow is:
 
 1. Open map.
-2. Load only courts inside the current map viewport.
-3. User pans/zooms.
-4. Show `Search this area`.
-5. Load that viewport only.
+2. Show cached courts immediately when available.
+3. Load only courts inside the current map viewport.
+4. Merge fresh remote rows into the in-memory court list.
+5. Save the visited court set to the local app cache.
+6. User pans/zooms.
+7. Show `Search this area`.
+8. Load that viewport only.
 
 The current app code now calls Supabase by map region and caps each response to a few hundred courts.
+The local cache is intentionally a visited-area cache, not a full global database cache.
 
 ## 3. Importing China OSM Data
 

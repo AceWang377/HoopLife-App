@@ -21,6 +21,7 @@ final class AppStore: ObservableObject {
     private let savedKey = "hooplife.savedCourts"
     private let onboardingKey = "hooplife.hasCompletedOnboarding"
     private let languageKey = "hooplife.appLanguage"
+    private let maximumCachedCourts = 30_000
     #if DEBUG
     private let courtsKey = "hooplife.courts.override"
     private let adminKey = "hooplife.adminUnlocked"
@@ -30,15 +31,17 @@ final class AppStore: ObservableObject {
     private var loadedRemoteRegions: [MKCoordinateRegion] = []
 
     init(courts: [Court] = CourtSeedStore.loadCourts()) {
+        let cachedCourts = CourtDiskCache.load()
         #if DEBUG
-        self.courts = Self.loadPersistedCourts() ?? courts
+        self.courts = Self.loadPersistedCourts() ?? cachedCourts ?? courts
         self.isAdminUnlocked = UserDefaults.standard.bool(forKey: adminKey)
         #else
-        self.courts = courts
+        self.courts = cachedCourts ?? courts
         #endif
         let storedLanguage = UserDefaults.standard.string(forKey: languageKey).flatMap(AppLanguage.init(rawValue:))
         self.appLanguage = storedLanguage ?? AppLanguage.preferred
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: onboardingKey)
+        self.courtDataSource = cachedCourts == nil ? "Local seed" : "Cached courts"
         let saved = UserDefaults.standard.stringArray(forKey: savedKey) ?? []
         self.savedCourtIDs = Set(saved)
     }
@@ -87,6 +90,7 @@ final class AppStore: ObservableObject {
             selectedCourt = selectedCourt.flatMap { selected in
                 remoteCourts.first { $0.id == selected.id }
             }
+            persistCourtCache()
             print("HoopLife loaded \(remoteCourts.count) courts from Supabase")
         } catch {
             courtDataSource = "Local seed"
@@ -110,6 +114,7 @@ final class AppStore: ObservableObject {
             selectedCourt = selectedCourt.flatMap { selected in
                 courts.first { $0.id == selected.id }
             }
+            persistCourtCache()
             print("HoopLife loaded \(remoteCourts.count) courts for current map area")
         } catch {
             print("HoopLife Supabase area load failed: \(error)")
@@ -124,6 +129,13 @@ final class AppStore: ObservableObject {
         courts = merged.values.sorted {
             if $0.city == $1.city { return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
             return $0.city.localizedCaseInsensitiveCompare($1.city) == .orderedAscending
+        }
+    }
+
+    private func persistCourtCache() {
+        let snapshot = Array(courts.prefix(maximumCachedCourts))
+        Task.detached(priority: .utility) {
+            CourtDiskCache.save(snapshot)
         }
     }
 
@@ -193,6 +205,39 @@ final class AppStore: ObservableObject {
         return try? JSONDecoder().decode([Court].self, from: data)
     }
     #endif
+}
+
+private enum CourtDiskCache {
+    private static let fileName = "hooplife-courts-cache-v1.json"
+    private static let maxAge: TimeInterval = 60 * 60 * 24 * 14
+
+    static func load() -> [Court]? {
+        guard let data = try? Data(contentsOf: cacheURL) else { return nil }
+        guard let payload = try? JSONDecoder().decode(Payload.self, from: data) else { return nil }
+        guard Date().timeIntervalSince1970 - payload.cachedAt < maxAge else { return nil }
+        return payload.courts.isEmpty ? nil : payload.courts
+    }
+
+    static func save(_ courts: [Court]) {
+        guard !courts.isEmpty else { return }
+        let payload = Payload(cachedAt: Date().timeIntervalSince1970, courts: courts)
+        guard let data = try? JSONEncoder().encode(payload) else { return }
+        try? FileManager.default.createDirectory(
+            at: cacheURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try? data.write(to: cacheURL, options: [.atomic])
+    }
+
+    private static var cacheURL: URL {
+        FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appending(path: fileName)
+    }
+
+    private struct Payload: Codable {
+        var cachedAt: TimeInterval
+        var courts: [Court]
+    }
 }
 
 #if DEBUG

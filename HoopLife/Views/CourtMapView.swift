@@ -23,6 +23,8 @@ struct CourtMapView: View {
     @State private var isSearchingCity = false
     @State private var showingFilters = false
     @State private var showingDetail = false
+    @State private var hasStartedInitialLoad = false
+    @State private var isChromeVisible = false
     @FocusState private var isSearchFocused: Bool
 
     private var visibleCourts: [Court] {
@@ -97,6 +99,9 @@ struct CourtMapView: View {
             .padding(.horizontal, 16)
             .padding(.top, 10)
             .padding(.bottom, 88)
+            .opacity(isChromeVisible ? 1 : 0)
+            .offset(y: isChromeVisible ? 0 : -10)
+            .animation(.smooth(duration: 0.42), value: isChromeVisible)
         }
         .sheet(isPresented: $showingFilters) {
             FilterSheetView()
@@ -122,6 +127,12 @@ struct CourtMapView: View {
             }
         }
         .task {
+            guard !hasStartedInitialLoad else { return }
+            hasStartedInitialLoad = true
+            try? await Task.sleep(for: .milliseconds(850))
+            withAnimation(.smooth(duration: 0.42)) {
+                isChromeVisible = true
+            }
             await store.loadRemoteCourts(in: mapRegion)
         }
     }
@@ -165,6 +176,7 @@ struct CourtMapView: View {
 
             searchBar
             searchAreaButton
+            remoteLoadingPill
             filterChips
         }
     }
@@ -282,12 +294,36 @@ struct CourtMapView: View {
         }
     }
 
+    @ViewBuilder
+    private var remoteLoadingPill: some View {
+        if store.isLoadingRemoteCourts && !shouldShowSearchAreaButton {
+            HStack(spacing: 8) {
+                ProgressView()
+                    .tint(HLColor.freshGreen)
+                    .controlSize(.small)
+                Text("Loading courts")
+                    .font(.caption.weight(.black))
+                    .foregroundStyle(.white.opacity(0.82))
+            }
+            .padding(.horizontal, 12)
+            .frame(height: 34)
+            .background(.black.opacity(0.46))
+            .clipShape(Capsule())
+            .overlay {
+                Capsule().stroke(.white.opacity(0.12), lineWidth: 1)
+            }
+            .transition(.opacity.combined(with: .scale(scale: 0.96)))
+        }
+    }
+
     private var bottomSurface: some View {
         Group {
             if let court = store.selectedCourt {
                 selectedCourtCard(court)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .animation(.spring(response: 0.34, dampingFraction: 0.88), value: store.selectedCourt?.id)
     }
 
     private func selectedCourtCard(_ court: Court) -> some View {
