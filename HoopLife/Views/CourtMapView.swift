@@ -44,7 +44,7 @@ struct CourtMapView: View {
 
     private var areaCourtCount: Int {
         guard isMapRegionQueryable else { return 0 }
-        visibleCourts.filter { mapRegion.contains($0.coordinate, padding: 0.18) }.count
+        return visibleCourts.filter { mapRegion.contains($0.coordinate, padding: 0.18) }.count
     }
 
     private var areaCourtCountLabel: String {
