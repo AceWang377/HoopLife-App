@@ -57,7 +57,7 @@ struct CourtMapView: View {
 
     var body: some View {
         ZStack {
-            Map(position: $cameraPosition) {
+            Map(position: $cameraPosition, interactionModes: .all) {
                 ForEach(mapCourts) { court in
                     Annotation("", coordinate: court.coordinate) {
                         Button {
@@ -92,11 +92,6 @@ struct CourtMapView: View {
             VStack(spacing: 0) {
                 topControlStack
                 Spacer()
-                HStack {
-                    Spacer()
-                    zoomControls
-                        .padding(.bottom, store.selectedCourt == nil ? 14 : 12)
-                }
                 bottomSurface
             }
             .padding(.horizontal, 16)
@@ -271,45 +266,6 @@ struct CourtMapView: View {
             }
             .buttonStyle(.plain)
         }
-    }
-
-    private var zoomControls: some View {
-        VStack(spacing: 1) {
-            zoomButton(systemName: "plus", label: "Zoom in") {
-                zoomMap(scale: 0.52)
-            }
-
-            Divider()
-                .frame(width: 28)
-                .overlay(.white.opacity(0.14))
-
-            zoomButton(systemName: "minus", label: "Zoom out") {
-                zoomMap(scale: 1.82)
-            }
-        }
-        .padding(5)
-        .background(.black.opacity(0.58))
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .stroke(.white.opacity(0.13), lineWidth: 1)
-        }
-        .shadow(color: .black.opacity(0.28), radius: 18, y: 8)
-    }
-
-    private func zoomButton(systemName: String, label: String, action: @escaping () -> Void) -> some View {
-        Button {
-            HLHaptics.selection()
-            action()
-        } label: {
-            Image(systemName: systemName)
-                .font(.headline.weight(.black))
-                .foregroundStyle(.white)
-                .frame(width: 44, height: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(label)
     }
 
     private var bottomSurface: some View {
@@ -527,19 +483,6 @@ struct CourtMapView: View {
         locationManager.requestLocation()
     }
 
-    private func zoomMap(scale: Double) {
-        let latitudeDelta = min(max(mapRegion.span.latitudeDelta * scale, 0.003), 45)
-        let longitudeDelta = min(max(mapRegion.span.longitudeDelta * scale, 0.003), 45)
-        let region = MKCoordinateRegion(
-            center: mapRegion.center,
-            span: MKCoordinateSpan(latitudeDelta: latitudeDelta, longitudeDelta: longitudeDelta)
-        )
-
-        withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
-            cameraPosition = .region(region)
-            mapRegion = region
-        }
-    }
 }
 
 final class HoopLifeLocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
