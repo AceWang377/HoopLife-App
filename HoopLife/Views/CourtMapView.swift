@@ -25,6 +25,7 @@ struct CourtMapView: View {
     @State private var showingDetail = false
     @State private var hasStartedInitialLoad = false
     @State private var isChromeVisible = false
+    @State private var pendingMapLoadTask: Task<Void, Never>?
     @FocusState private var isSearchFocused: Bool
 
     private let maximumQueryableLatitudeDelta = 1.6
@@ -52,7 +53,16 @@ struct CourtMapView: View {
     }
 
     private var shouldShowSearchAreaButton: Bool {
-        isMapRegionQueryable && !searchRegion.isSimilar(to: mapRegion)
+        false
+    }
+
+    private var countrySummaryPins: [CountryCourtSummary] {
+        guard !isMapRegionQueryable else { return [] }
+        return store.countrySummaries
+            .filter { mapRegion.contains($0.coordinate, padding: 0.70) }
+            .sorted { $0.courtCount > $1.courtCount }
+            .prefix(48)
+            .map(\.self)
     }
 
     private var mapCourts: [Court] {
@@ -79,6 +89,18 @@ struct CourtMapView: View {
     var body: some View {
         ZStack {
             Map(position: $cameraPosition, interactionModes: .all) {
+                ForEach(countrySummaryPins) { summary in
+                    Annotation("", coordinate: summary.coordinate) {
+                        Button {
+                            HLHaptics.selection()
+                            focusMap(on: summary)
+                        } label: {
+                            CountrySummaryPin(summary: summary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+
                 ForEach(mapCourts) { court in
                     Annotation("", coordinate: court.coordinate) {
                         Button {
@@ -98,7 +120,7 @@ struct CourtMapView: View {
             }
             .mapStyle(.standard(elevation: .flat, pointsOfInterest: .including([.park, .publicTransport, .school])))
             .onMapCameraChange(frequency: .onEnd) { context in
-                mapRegion = context.region
+                handleMapCameraEnd(context.region)
             }
             .ignoresSafeArea()
 
@@ -152,7 +174,11 @@ struct CourtMapView: View {
             withAnimation(.smooth(duration: 0.42)) {
                 isChromeVisible = true
             }
+            await store.loadCountrySummaries()
             await loadRemoteCourtsIfQueryable(in: mapRegion, force: false)
+        }
+        .onDisappear {
+            pendingMapLoadTask?.cancel()
         }
     }
 
@@ -529,8 +555,31 @@ struct CourtMapView: View {
 
     private var mapScaleHintText: String {
         switch store.appLanguage {
-        case .english: "Zoom in or search a city"
-        case .simplifiedChinese: "放大地图或搜索城市"
+        case .english: "Tap a country or zoom in"
+        case .simplifiedChinese: "点击国家或放大地图"
+        }
+    }
+
+    @MainActor
+    private func handleMapCameraEnd(_ region: MKCoordinateRegion) {
+        mapRegion = region
+        guard isQueryable(region) else {
+            pendingMapLoadTask?.cancel()
+            return
+        }
+        scheduleAutomaticAreaLoad(for: region)
+    }
+
+    @MainActor
+    private func scheduleAutomaticAreaLoad(for region: MKCoordinateRegion) {
+        pendingMapLoadTask?.cancel()
+        pendingMapLoadTask = Task {
+            try? await Task.sleep(for: .milliseconds(650))
+            guard !Task.isCancelled else { return }
+            await MainActor.run {
+                searchRegion = region
+            }
+            await loadRemoteCourtsIfQueryable(in: region, force: false)
         }
     }
 
@@ -596,6 +645,24 @@ struct CourtMapView: View {
         cameraPosition = .region(region)
         mapRegion = region
         searchRegion = region
+    }
+
+    private func focusMap(on summary: CountryCourtSummary) {
+        let latitudeDelta = min(max((summary.maxLat - summary.minLat) * 0.35, 0.42), maximumQueryableLatitudeDelta * 0.92)
+        let longitudeDelta = min(max((summary.maxLng - summary.minLng) * 0.35, 0.42), maximumQueryableLongitudeDelta * 0.92)
+        let region = MKCoordinateRegion(
+            center: summary.coordinate,
+            span: MKCoordinateSpan(latitudeDelta: latitudeDelta, longitudeDelta: longitudeDelta)
+        )
+
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) {
+            cameraPosition = .region(region)
+            mapRegion = region
+            searchRegion = region
+            store.selectedCourt = nil
+        }
+
+        scheduleAutomaticAreaLoad(for: region)
     }
 
     private func locateUser() {
@@ -698,6 +765,41 @@ struct CourtPin: View {
         case .needsCheck: HLColor.warning
         case .userSuggested: HLColor.electricBlue
         case .imported: HLColor.imported
+        }
+    }
+}
+
+struct CountrySummaryPin: View {
+    let summary: CountryCourtSummary
+
+    var body: some View {
+        VStack(spacing: 6) {
+            ZStack {
+                Circle()
+                    .fill(HLColor.freshGreen)
+                    .frame(width: 58, height: 58)
+                    .shadow(color: .black.opacity(0.28), radius: 16, y: 8)
+
+                VStack(spacing: 1) {
+                    Text(summary.countryCode)
+                        .font(.caption2.weight(.black))
+                    Text(summary.countLabel)
+                        .font(.caption.weight(.black))
+                }
+                .foregroundStyle(HLColor.night)
+            }
+            .overlay {
+                Circle().stroke(.white, lineWidth: 4)
+            }
+
+            Text(summary.displayName)
+                .font(.caption2.weight(.black))
+                .foregroundStyle(.white)
+                .lineLimit(1)
+                .padding(.horizontal, 8)
+                .frame(height: 22)
+                .background(.black.opacity(0.58))
+                .clipShape(Capsule())
         }
     }
 }

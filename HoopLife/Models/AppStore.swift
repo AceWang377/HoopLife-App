@@ -17,6 +17,7 @@ final class AppStore: ObservableObject {
     @Published var hasCompletedOnboarding: Bool
     @Published var courtDataSource = "Local seed"
     @Published var isLoadingRemoteCourts = false
+    @Published var countrySummaries: [CountryCourtSummary] = []
 
     private let savedKey = "hooplife.savedCourts"
     private let onboardingKey = "hooplife.hasCompletedOnboarding"
@@ -118,6 +119,16 @@ final class AppStore: ObservableObject {
             print("HoopLife loaded \(remoteCourts.count) courts for current map area")
         } catch {
             print("HoopLife Supabase area load failed: \(error)")
+        }
+    }
+
+    func loadCountrySummaries(force: Bool = false) async {
+        guard force || countrySummaries.isEmpty else { return }
+
+        do {
+            countrySummaries = try await supabaseCourtService.fetchCountrySummaries()
+        } catch {
+            print("HoopLife country summary load failed: \(error)")
         }
     }
 

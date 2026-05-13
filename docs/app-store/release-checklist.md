@@ -36,7 +36,8 @@ Last updated: May 13, 2026
 - Open court map.
 - Pan and zoom the map.
 - Search for a city or court.
-- Tap `Search this area`.
+- Zoom out and confirm country summary pins appear.
+- Zoom in and confirm nearby court pins auto-load without tapping a manual search button.
 - Apply and reset filters.
 - Tap a court pin.
 - Open court details.

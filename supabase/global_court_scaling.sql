@@ -200,6 +200,46 @@ grant execute on function public.courts_in_view(
   text
 ) to anon, authenticated;
 
+create or replace function public.court_country_summaries()
+returns table (
+  country_code text,
+  court_count integer,
+  center_lat double precision,
+  center_lng double precision,
+  min_lat double precision,
+  min_lng double precision,
+  max_lat double precision,
+  max_lng double precision
+)
+language sql
+stable
+security invoker
+set search_path = public, extensions
+as $$
+  select
+    c.country_code,
+    count(*)::integer as court_count,
+    avg(c.latitude)::double precision as center_lat,
+    avg(c.longitude)::double precision as center_lng,
+    min(c.latitude)::double precision as min_lat,
+    min(c.longitude)::double precision as min_lng,
+    max(c.latitude)::double precision as max_lat,
+    max(c.longitude)::double precision as max_lng
+  from public.courts c
+  where c.country_code is not null
+    and c.country_code <> ''
+    and c.latitude is not null
+    and c.longitude is not null
+  group by c.country_code
+  order by court_count desc, c.country_code;
+$$;
+
+grant execute on function public.court_country_summaries()
+to anon, authenticated;
+
 -- Smoke test around Sheffield.
 select count(*)
 from public.courts_in_view(53.30, -1.60, 53.46, -1.35, 600, 'GB');
+
+select *
+from public.court_country_summaries();

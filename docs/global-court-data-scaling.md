@@ -16,15 +16,19 @@ It adds:
 - PostGIS `location`
 - spatial indexes
 - `public.courts_in_view(...)` RPC
+- `public.court_country_summaries()` RPC for country-level map pins
 
 After running it, test:
 
 ```sql
 select count(*)
 from public.courts_in_view(53.30, -1.60, 53.46, -1.35, 600, 'GB');
+
+select *
+from public.court_country_summaries();
 ```
 
-You should get a count, not an error.
+You should get results, not an error.
 
 ## 2. App Reading Model
 
@@ -37,9 +41,9 @@ The production reading flow is:
 3. Load only courts inside the current map viewport.
 4. Merge fresh remote rows into the in-memory court list.
 5. Save the visited court set to the local app cache.
-6. User pans/zooms.
-7. Show `Search this area`.
-8. Load that viewport only.
+6. At country-level zoom, show one country summary pin with the total court count.
+7. User pans/zooms into a queryable map range.
+8. Auto-load that viewport after a short delay.
 
 The current app code now calls Supabase by map region and caps each response to a few hundred courts.
 The local cache is intentionally a visited-area cache, not a full global database cache.
@@ -117,7 +121,8 @@ For large datasets:
 - Do not query by `limit=10000` in the app.
 - Do not render every court as a map pin.
 - Keep each viewport response capped to `600-700`.
-- At low zoom levels, prefer city search / `Search this area` over automatic loading.
+- At low zoom levels, render country summary pins, not court pins.
+- At queryable zoom levels, auto-load the current viewport after camera movement settles.
 - Use staging tables for large imports, then merge into `public.courts`.
 
 ## 6. Optional Staging Table

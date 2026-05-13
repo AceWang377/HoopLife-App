@@ -9,6 +9,29 @@ enum SupabaseConfig {
 struct SupabaseCourtService {
     private let maximumViewportLimit = 700
 
+    func fetchCountrySummaries() async throws -> [CountryCourtSummary] {
+        let url = SupabaseConfig.projectURL.appending(path: "/rest/v1/rpc/court_country_summaries")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(SupabaseConfig.publishableKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(SupabaseConfig.publishableKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = Data("{}".utf8)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw SupabaseCourtError.invalidResponse
+        }
+        guard 200..<300 ~= httpResponse.statusCode else {
+            throw SupabaseCourtError.requestFailed(statusCode: httpResponse.statusCode)
+        }
+
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode([CountryCourtSummary].self, from: data)
+    }
+
     func fetchCourts(limit: Int = 10_000) async throws -> [Court] {
         let pageSize = 1_000
         var allCourts: [Court] = []
@@ -139,6 +162,66 @@ struct SupabaseCourtService {
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         return try decoder.decode([SupabaseCourtDTO].self, from: data).map(\.court)
     }
+}
+
+struct CountryCourtSummary: Identifiable, Decodable, Hashable {
+    var countryCode: String
+    var courtCount: Int
+    var centerLat: Double
+    var centerLng: Double
+    var minLat: Double
+    var minLng: Double
+    var maxLat: Double
+    var maxLng: Double
+
+    var id: String { countryCode }
+
+    var displayName: String {
+        CountryCourtSummary.countryNames[countryCode] ?? countryCode
+    }
+
+    var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: centerLat, longitude: centerLng)
+    }
+
+    var countLabel: String {
+        switch courtCount {
+        case 1_000_000...:
+            return "\(courtCount / 1_000_000)M"
+        case 10_000...:
+            return "\(courtCount / 1_000)K"
+        case 1_000...:
+            let value = Double(courtCount) / 1_000
+            return String(format: "%.1fK", value)
+        default:
+            return "\(courtCount)"
+        }
+    }
+
+    private static let countryNames = [
+        "AT": "Austria",
+        "BE": "Belgium",
+        "BG": "Bulgaria",
+        "CN": "China",
+        "CZ": "Czechia",
+        "DE": "Germany",
+        "DK": "Denmark",
+        "ES": "Spain",
+        "FI": "Finland",
+        "FR": "France",
+        "GB": "United Kingdom",
+        "GR": "Greece",
+        "HR": "Croatia",
+        "HU": "Hungary",
+        "IE": "Ireland",
+        "IT": "Italy",
+        "NL": "Netherlands",
+        "PL": "Poland",
+        "PT": "Portugal",
+        "RO": "Romania",
+        "SE": "Sweden",
+        "US": "United States"
+    ]
 }
 
 enum SupabaseCourtError: Error {
