@@ -360,7 +360,7 @@ private struct SupabaseCourtDTO: Decodable {
     var notes: String?
     var photoAssetName: String?
     var osmRef: String?
-    var osmTagsJson: [String: String]?
+    var osmTagsJson: [String: OSMTagValue]?
 
     var court: Court {
         Court(
@@ -416,11 +416,11 @@ private struct SupabaseCourtDTO: Decodable {
             return cleanedName
         }
 
-        if let osmName = cleanOptional(osmTagsJson?["name"]) ?? cleanOptional(osmTagsJson?["official_name"]) {
+        if let osmName = tag("name") ?? tag("official_name") {
             return osmName
         }
 
-        if let operatorName = cleanOptional(osmTagsJson?["operator"]) {
+        if let operatorName = tag("operator") {
             return "\(operatorName) basketball court"
         }
 
@@ -440,11 +440,11 @@ private struct SupabaseCourtDTO: Decodable {
             return existingArea
         }
 
-        return cleanOptional(osmTagsJson?["addr:suburb"]) ??
-            cleanOptional(osmTagsJson?["addr:neighbourhood"]) ??
-            cleanOptional(osmTagsJson?["addr:district"]) ??
-            cleanOptional(osmTagsJson?["addr:street"]) ??
-            cleanOptional(osmTagsJson?["operator"]) ??
+        return tag("addr:suburb") ??
+            tag("addr:neighbourhood") ??
+            tag("addr:district") ??
+            tag("addr:street") ??
+            tag("operator") ??
             clean(area, fallback: "Unknown area")
     }
 
@@ -453,40 +453,44 @@ private struct SupabaseCourtDTO: Decodable {
             return existingCity
         }
 
-        return cleanOptional(osmTagsJson?["addr:city"]) ??
-            cleanOptional(osmTagsJson?["addr:town"]) ??
-            cleanOptional(osmTagsJson?["addr:village"]) ??
+        return tag("addr:city") ??
+            tag("addr:town") ??
+            tag("addr:village") ??
             clean(city, fallback: "UK")
     }
 
     private var postcode: String? {
-        cleanOptional(osmTagsJson?["addr:postcode"])
+        tag("addr:postcode")
     }
 
     private var streetOrArea: String? {
-        cleanOptional(osmTagsJson?["addr:street"]) ??
-            cleanOptional(osmTagsJson?["addr:suburb"]) ??
-            cleanOptional(osmTagsJson?["addr:neighbourhood"]) ??
-            cleanOptional(osmTagsJson?["addr:city"])
+        tag("addr:street") ??
+            tag("addr:suburb") ??
+            tag("addr:neighbourhood") ??
+            tag("addr:city")
     }
 
     private var addressLine: String? {
         let streetAddress = [
-            cleanOptional(osmTagsJson?["addr:housenumber"]),
-            cleanOptional(osmTagsJson?["addr:street"])
+            tag("addr:housenumber"),
+            tag("addr:street")
         ]
             .compactMap(\.self)
             .joined(separator: " ")
 
         let parts = [
             cleanOptional(streetAddress),
-            cleanOptional(osmTagsJson?["addr:suburb"]),
-            cleanOptional(osmTagsJson?["addr:city"]),
+            tag("addr:suburb"),
+            tag("addr:city"),
             postcode
         ]
             .compactMap(\.self)
 
         return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
+
+    private func tag(_ key: String) -> String? {
+        cleanOptional(osmTagsJson?[key]?.stringValue)
     }
 
     private func clean(_ value: String?, fallback: String) -> String {
@@ -529,5 +533,40 @@ private struct SupabaseCourtDTO: Decodable {
             .compactMap { PeakTime(rawValue: String($0).trimmingCharacters(in: .whitespacesAndNewlines)) }
 
         return items.isEmpty ? [.unknown] : items
+    }
+}
+
+private enum OSMTagValue: Decodable {
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+    case null
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if container.decodeNil() {
+            self = .null
+        } else if let value = try? container.decode(String.self) {
+            self = .string(value)
+        } else if let value = try? container.decode(Bool.self) {
+            self = .bool(value)
+        } else if let value = try? container.decode(Double.self) {
+            self = .number(value)
+        } else {
+            self = .null
+        }
+    }
+
+    var stringValue: String? {
+        switch self {
+        case .string(let value):
+            return value
+        case .number(let value):
+            return value.rounded() == value ? String(Int64(value)) : String(value)
+        case .bool(let value):
+            return value ? "yes" : "no"
+        case .null:
+            return nil
+        }
     }
 }
