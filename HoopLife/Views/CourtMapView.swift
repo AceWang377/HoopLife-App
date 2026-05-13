@@ -20,17 +20,17 @@ struct CourtMapView: View {
         span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08)
     )
     @State private var searchText = ""
+    @State private var isSearchingCity = false
     @State private var showingFilters = false
     @State private var showingDetail = false
     @FocusState private var isSearchFocused: Bool
 
     private var visibleCourts: [Court] {
         let filtered = store.filteredCourts
-        guard !searchText.isEmpty else { return filtered }
-        return filtered.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-            $0.area.localizedCaseInsensitiveContains(searchText)
-        }
+        let query = normalizedSearchText
+        guard !query.isEmpty else { return filtered }
+        let matches = matchingCourts(for: query, in: filtered)
+        return matches.isEmpty ? filtered : matches
     }
 
     private var areaCourtCount: Int {
@@ -191,7 +191,7 @@ struct CourtMapView: View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.white.opacity(0.64))
-            TextField("Search court or area", text: $searchText)
+            TextField(store.copy(.searchPlaceholder), text: $searchText)
                 .textInputAutocapitalization(.words)
                 .disableAutocorrection(true)
                 .foregroundStyle(.white)
@@ -199,8 +199,15 @@ struct CourtMapView: View {
                 .focused($isSearchFocused)
                 .submitLabel(.search)
                 .onSubmit {
-                    submitSearch()
+                    Task {
+                        await submitSearch()
+                    }
                 }
+            if isSearchingCity {
+                ProgressView()
+                    .tint(HLColor.freshGreen)
+                    .controlSize(.small)
+            }
             if !searchText.isEmpty {
                 Button {
                     HLHaptics.light()
@@ -226,13 +233,13 @@ struct CourtMapView: View {
     private var filterChips: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                MapFilterChip(label: "Outdoor", isSelected: store.filters.outdoor) { toggleFilter { store.filters.outdoor.toggle() } }
-                MapFilterChip(label: "Indoor", isSelected: store.filters.indoor) { toggleFilter { store.filters.indoor.toggle() } }
-                MapFilterChip(label: "Free", isSelected: store.filters.free) { toggleFilter { store.filters.free.toggle() } }
-                MapFilterChip(label: "Lights", isSelected: store.filters.lights) { toggleFilter { store.filters.lights.toggle() } }
-                MapFilterChip(label: "Dry", isSelected: store.filters.dryAfterRain) { toggleFilter { store.filters.dryAfterRain.toggle() } }
-                MapFilterChip(label: "Nets", isSelected: store.filters.nets) { toggleFilter { store.filters.nets.toggle() } }
-                MapFilterChip(label: "Standard rim", isSelected: store.filters.standardRim) { toggleFilter { store.filters.standardRim.toggle() } }
+                MapFilterChip(label: store.copy(.outdoor), isSelected: store.filters.outdoor) { toggleFilter { store.filters.outdoor.toggle() } }
+                MapFilterChip(label: store.copy(.indoor), isSelected: store.filters.indoor) { toggleFilter { store.filters.indoor.toggle() } }
+                MapFilterChip(label: store.copy(.free), isSelected: store.filters.free) { toggleFilter { store.filters.free.toggle() } }
+                MapFilterChip(label: store.copy(.lights), isSelected: store.filters.lights) { toggleFilter { store.filters.lights.toggle() } }
+                MapFilterChip(label: store.copy(.dry), isSelected: store.filters.dryAfterRain) { toggleFilter { store.filters.dryAfterRain.toggle() } }
+                MapFilterChip(label: store.copy(.nets), isSelected: store.filters.nets) { toggleFilter { store.filters.nets.toggle() } }
+                MapFilterChip(label: store.copy(.standardRim), isSelected: store.filters.standardRim) { toggleFilter { store.filters.standardRim.toggle() } }
             }
             .padding(.trailing, 20)
         }
@@ -245,10 +252,11 @@ struct CourtMapView: View {
                 HLHaptics.selection()
                 withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
                     searchRegion = mapRegion
+                    searchText = ""
                     store.selectedCourt = nil
                 }
             } label: {
-                Label("Search this area", systemImage: "scope")
+                Label(store.copy(.searchThisArea), systemImage: "scope")
                     .font(.caption.weight(.black))
                     .foregroundStyle(HLColor.night)
                     .padding(.horizontal, 14)
@@ -308,13 +316,13 @@ struct CourtMapView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white.opacity(0.70))
 
-            Button("Details") {
+            Button(store.copy(.details)) {
                 HLHaptics.light()
                 showingDetail = true
             }
             .buttonStyle(DarkPrimaryButtonStyle())
 
-            Button("Directions") {
+            Button(store.copy(.directions)) {
                     HLHaptics.medium()
                     openDirections(to: court)
             }
@@ -332,15 +340,15 @@ struct CourtMapView: View {
 
     private func warningText(for court: Court) -> String {
         if court.drynessAfterRain == .slowToDry || court.drynessAfterRain == .puddlesCommon {
-            return "May be slippery after rain. Check before travelling."
+            return store.copy(.rainWarning)
         }
         if court.hasNets == .unknown || court.rimHeight == .unknown {
-            return court.confidence == .imported ? "Imported from OpenStreetMap. Not yet verified by HoopLife." : "Rim and net details still need confirmation."
+            return court.confidence == .imported ? store.copy(.importedWarning) : store.copy(.rimNetWarning)
         }
         if court.confidence == .imported {
-            return "Imported from OpenStreetMap. Details may be incomplete."
+            return store.copy(.incompleteWarning)
         }
-        return "Key court facts are ready to check."
+        return store.copy(.readyWarning)
     }
 
     private func openDirections(to court: Court) {
@@ -357,20 +365,107 @@ struct CourtMapView: View {
         }
     }
 
-    private func submitSearch() {
+    @MainActor
+    private func submitSearch() async {
         isSearchFocused = false
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty, !visibleCourts.isEmpty else { return }
+        let query = normalizedSearchText
+        guard !query.isEmpty else { return }
 
-        let region = MKCoordinateRegion.enclosing(visibleCourts.map(\.coordinate))
-        guard let region else { return }
-
-        withAnimation(.spring(response: 0.35, dampingFraction: 0.86)) {
-            cameraPosition = .region(region)
-            mapRegion = region
-            searchRegion = region
-            store.selectedCourt = visibleCourts.count == 1 ? visibleCourts[0] : nil
+        let filtered = store.filteredCourts
+        let matches = matchingCourts(for: query, in: filtered)
+        let cityMatches = cityMatchingCourts(for: query, in: filtered)
+        if let region = MKCoordinateRegion.enclosing(cityMatches.map(\.coordinate)) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.86)) {
+                cameraPosition = .region(region)
+                mapRegion = region
+                searchRegion = region
+                store.selectedCourt = nil
+            }
+            return
         }
+
+        let exactMatches = exactCourtNameMatches(for: query, in: filtered)
+        if let region = MKCoordinateRegion.enclosing(exactMatches.map(\.coordinate)) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.86)) {
+                cameraPosition = .region(region)
+                mapRegion = region
+                searchRegion = region
+                store.selectedCourt = exactMatches.count == 1 ? exactMatches[0] : nil
+            }
+            return
+        }
+
+        isSearchingCity = true
+        defer { isSearchingCity = false }
+
+        if let region = await geocodeRegion(for: searchText) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.86)) {
+                searchText = ""
+                cameraPosition = .region(region)
+                mapRegion = region
+                searchRegion = region
+                store.selectedCourt = nil
+            }
+            return
+        }
+
+        if let region = MKCoordinateRegion.enclosing(matches.map(\.coordinate)) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.86)) {
+                cameraPosition = .region(region)
+                mapRegion = region
+                searchRegion = region
+                store.selectedCourt = nil
+            }
+        }
+    }
+
+    private var normalizedSearchText: String {
+        normalize(searchText)
+    }
+
+    private func matchingCourts(for query: String, in courts: [Court]) -> [Court] {
+        let cityMatches = cityMatchingCourts(for: query, in: courts)
+        if !cityMatches.isEmpty { return cityMatches }
+
+        let areaMatches = courts.filter { normalize($0.area).contains(query) }
+        if !areaMatches.isEmpty { return areaMatches }
+
+        return courts.filter { normalize($0.name).contains(query) }
+    }
+
+    private func cityMatchingCourts(for query: String, in courts: [Court]) -> [Court] {
+        let exactCityMatches = courts.filter { normalize($0.city) == query }
+        if !exactCityMatches.isEmpty { return exactCityMatches }
+
+        return courts.filter { normalize($0.city).contains(query) }
+    }
+
+    private func exactCourtNameMatches(for query: String, in courts: [Court]) -> [Court] {
+        courts.filter { normalize($0.name) == query }
+    }
+
+    private func normalize(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+            .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+    }
+
+    private func geocodeRegion(for query: String) async -> MKCoordinateRegion? {
+        let geocoder = CLGeocoder()
+        let searchTerms = [
+            "\(query), United Kingdom",
+            query
+        ]
+
+        for term in searchTerms {
+            if let placemark = try? await geocoder.geocodeAddressString(term).first,
+               let region = placemark.mapRegion {
+                return region
+            }
+        }
+
+        return nil
     }
 
     private func focusMap(on court: Court) {
@@ -537,5 +632,25 @@ private extension CLLocationCoordinate2D {
     func distance(to coordinate: CLLocationCoordinate2D) -> CLLocationDistance {
         CLLocation(latitude: latitude, longitude: longitude)
             .distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude))
+    }
+}
+
+private extension CLPlacemark {
+    var mapRegion: MKCoordinateRegion? {
+        if let circularRegion = region as? CLCircularRegion {
+            let meters = max(circularRegion.radius * 2.2, 12_000)
+            return MKCoordinateRegion(
+                center: circularRegion.center,
+                latitudinalMeters: meters,
+                longitudinalMeters: meters
+            )
+        }
+
+        guard let coordinate = location?.coordinate else { return nil }
+        return MKCoordinateRegion(
+            center: coordinate,
+            latitudinalMeters: 36_000,
+            longitudinalMeters: 36_000
+        )
     }
 }

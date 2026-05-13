@@ -104,10 +104,10 @@ enum AppTab: CaseIterable {
     case map
     case profile
 
-    var title: String {
+    func title(_ language: AppLanguage) -> String {
         switch self {
-        case .map: "Map"
-        case .profile: "Profile"
+        case .map: HLCopy.mapTab.text(language)
+        case .profile: HLCopy.profileTab.text(language)
         }
     }
 
@@ -120,6 +120,7 @@ enum AppTab: CaseIterable {
 }
 
 struct FloatingDock: View {
+    @EnvironmentObject private var store: AppStore
     @Binding var selectedTab: AppTab
 
     var body: some View {
@@ -134,7 +135,7 @@ struct FloatingDock: View {
                     VStack(spacing: 4) {
                         Image(systemName: tab.icon)
                             .font(.system(size: 17, weight: .bold))
-                        Text(tab.title)
+                        Text(tab.title(store.appLanguage))
                             .font(.caption2.weight(.bold))
                     }
                     .foregroundStyle(selectedTab == tab ? HLColor.night : .white.opacity(0.70))

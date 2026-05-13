@@ -14,6 +14,7 @@ struct ProfileView: View {
                 VStack(alignment: .leading, spacing: 18) {
                     header
                     quickStats
+                    languageSection
                     librarySection
                     dataSection
                 }
@@ -48,10 +49,10 @@ struct ProfileView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Profile")
+            Text(store.copy(.profileTitle))
                 .font(.system(size: 38, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
-            Text("Browse courts without an account. Saved courts stay on this device.")
+            Text(store.copy(.profileSubtitle))
                 .font(.body.weight(.medium))
                 .foregroundStyle(.white.opacity(0.66))
         }
@@ -66,9 +67,9 @@ struct ProfileView: View {
 
     private var quickStats: some View {
         HStack(spacing: 10) {
-            StatTile(value: "\(store.courts.count)", label: "courts")
-            StatTile(value: "\(store.savedCourts.count)", label: "saved")
-            StatTile(value: "\(verifiedCount)", label: "verified")
+            StatTile(value: "\(store.courts.count)", label: store.copy(.courts))
+            StatTile(value: "\(store.savedCourts.count)", label: store.copy(.saved))
+            StatTile(value: "\(verifiedCount)", label: store.copy(.verified))
         }
     }
 
@@ -81,6 +82,50 @@ struct ProfileView: View {
             VStack(spacing: 10) {
                 ProfileLink(title: "Saved courts", subtitle: "Your local list", icon: "bookmark.fill") {
                     SavedCourtsView()
+                }
+            }
+        }
+    }
+
+    private var languageSection: some View {
+        SectionCard(title: store.copy(.language)) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    Image(systemName: "globe")
+                        .font(.headline.weight(.bold))
+                        .foregroundStyle(HLColor.night)
+                        .frame(width: 38, height: 38)
+                        .background(HLColor.freshGreen)
+                        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(store.copy(.appLanguage))
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.white)
+                        Text(store.copy(.appLanguageSubtitle))
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.white.opacity(0.58))
+                    }
+
+                    Spacer()
+                }
+
+                HStack(spacing: 10) {
+                    ForEach(AppLanguage.allCases) { language in
+                        Button {
+                            HLHaptics.selection()
+                            store.setLanguage(language)
+                        } label: {
+                            Text(language.nativeName)
+                                .font(.subheadline.weight(.black))
+                                .foregroundStyle(store.appLanguage == language ? HLColor.night : .white.opacity(0.78))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 42)
+                                .background(store.appLanguage == language ? HLColor.freshGreen : .white.opacity(0.10))
+                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
             }
         }

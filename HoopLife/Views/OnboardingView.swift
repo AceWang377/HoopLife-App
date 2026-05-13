@@ -2,10 +2,10 @@ import SwiftUI
 
 struct OnboardingView: View {
     @EnvironmentObject private var store: AppStore
-    @State private var step = 0
-    @State private var selectedPreferences: Set<String> = ["Outdoor", "Free", "Dry after rain"]
+    @State private var step: OnboardingStep = .language
+    @State private var selectedPreferences: Set<OnboardingPreference> = [.outdoor, .free, .dryAfterRain]
 
-    private let preferences = ["Outdoor", "Indoor", "Free", "Lights", "Dry after rain", "Nets", "Standard rim", "Solo shooting", "Pickup"]
+    private let preferences = OnboardingPreference.allCases
 
     var body: some View {
         GeometryReader { proxy in
@@ -13,9 +13,12 @@ struct OnboardingView: View {
                 AnimatedCourtIntro()
                     .ignoresSafeArea()
 
-                if step == 0 {
+                switch step {
+                case .language:
+                    languageView(size: proxy.size)
+                case .intro:
                     welcome(size: proxy.size)
-                } else {
+                case .preferences:
                     preferencesView(size: proxy.size)
                 }
             }
@@ -23,61 +26,121 @@ struct OnboardingView: View {
         }
     }
 
-    private func welcome(size: CGSize) -> some View {
+    private func languageView(size: CGSize) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                HStack(spacing: 8) {
-                    Image(systemName: "basketball.fill")
-                        .foregroundStyle(HLColor.basketballOrange)
-                    Text("HoopLife")
-                        .font(.headline.weight(.black))
-                        .foregroundStyle(.white)
-                }
-                .padding(.horizontal, 14)
-                .frame(height: 44)
-                .background(.black.opacity(0.28))
-                .clipShape(Capsule())
-                .overlay {
-                    Capsule().stroke(.white.opacity(0.12), lineWidth: 1)
-                }
-
-                Spacer()
-            }
+            brandPill
 
             Spacer(minLength: 28)
 
             VStack(alignment: .leading, spacing: 14) {
-                Text("Know before you hoop.")
+                Text(store.copy(.languageTitle))
+                    .font(.system(size: min(size.width * 0.108, 42), weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Text(store.copy(.languageSubtitle))
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.76))
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 24)
+
+            VStack(spacing: 12) {
+                ForEach(AppLanguage.allCases) { language in
+                    Button {
+                        HLHaptics.selection()
+                        store.setLanguage(language)
+                    } label: {
+                        HStack(spacing: 14) {
+                            Text(language.shortName)
+                                .font(.headline.weight(.black))
+                                .foregroundStyle(store.appLanguage == language ? HLColor.night : .white)
+                                .frame(width: 46, height: 46)
+                                .background(store.appLanguage == language ? HLColor.freshGreen : .white.opacity(0.12))
+                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(language.nativeName)
+                                    .font(.headline.weight(.black))
+                                    .foregroundStyle(.white)
+                                Text(language.displayName)
+                                    .font(.caption.weight(.bold))
+                                    .foregroundStyle(.white.opacity(0.58))
+                            }
+
+                            Spacer()
+
+                            Image(systemName: store.appLanguage == language ? "checkmark.circle.fill" : "circle")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(store.appLanguage == language ? HLColor.freshGreen : .white.opacity(0.32))
+                        }
+                        .padding(14)
+                        .background(.black.opacity(store.appLanguage == language ? 0.48 : 0.28))
+                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .stroke(store.appLanguage == language ? HLColor.freshGreen.opacity(0.72) : .white.opacity(0.13), lineWidth: 1)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            Spacer(minLength: 26)
+
+            Button(store.copy(.languageContinue)) {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
+                    step = .intro
+                }
+            }
+            .buttonStyle(DarkPrimaryButtonStyle())
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 24)
+        .safeAreaPadding(.top, 32)
+        .safeAreaPadding(.bottom, 30)
+    }
+
+    private func welcome(size: CGSize) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            brandPill
+
+            Spacer(minLength: 28)
+
+            VStack(alignment: .leading, spacing: 14) {
+                Text(store.copy(.introTitle))
                     .font(.system(size: min(size.width * 0.108, 42), weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                     .lineSpacing(2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text("Dry surface, nets, rim height, lights, space and access. Fast court facts without logging in.")
+                Text(store.copy(.introSubtitle))
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.76))
                     .lineSpacing(3)
                     .fixedSize(horizontal: false, vertical: true)
 
-                HStack(spacing: 10) {
-                    WelcomeMetric(value: "\(store.courts.count)", label: "courts")
-                    WelcomeMetric(value: "0", label: "login")
-                    WelcomeMetric(value: "live", label: "map")
+                VStack(spacing: 10) {
+                    IntroFeatureRow(icon: "map.fill", title: store.copy(.introMapTitle), subtitle: store.copy(.introMapSubtitle))
+                    IntroFeatureRow(icon: "checklist.checked", title: store.copy(.introFactsTitle), subtitle: store.copy(.introFactsSubtitle))
+                    IntroFeatureRow(icon: "person.slash.fill", title: store.copy(.introNoLoginTitle), subtitle: store.copy(.introNoLoginSubtitle))
                 }
-                .padding(.top, 6)
+                .padding(.top, 8)
             }
 
             Spacer(minLength: 30)
 
             VStack(spacing: 12) {
-                Button("Open court map") {
+                Button(store.copy(.startMap)) {
                     store.completeOnboarding()
                 }
                 .buttonStyle(DarkPrimaryButtonStyle())
 
-                Button("Choose court facts") {
+                Button(store.copy(.chooseFacts)) {
                     withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
-                        step = 1
+                        step = .preferences
                     }
                 }
                 .buttonStyle(DarkSecondaryButtonStyle())
@@ -93,7 +156,7 @@ struct OnboardingView: View {
         VStack(alignment: .leading, spacing: 22) {
             Button {
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
-                    step = 0
+                    step = .intro
                 }
             } label: {
                 Image(systemName: "chevron.left")
@@ -106,18 +169,18 @@ struct OnboardingView: View {
 
             Spacer()
 
-            Text("What should the map surface first?")
+            Text(store.copy(.preferencesTitle))
                 .font(.system(size: min(size.width * 0.105, 40), weight: .black, design: .rounded))
                 .foregroundStyle(.white)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Text("Pick the factual court signals that matter for your next run.")
+            Text(store.copy(.preferencesSubtitle))
                 .font(.body.weight(.semibold))
                 .foregroundStyle(.white.opacity(0.76))
 
             FlowLayout(spacing: 10) {
                 ForEach(preferences, id: \.self) { preference in
-                    SelectableChip(label: preference, isSelected: selectedPreferences.contains(preference)) {
+                    SelectableChip(label: preference.title(store.appLanguage), isSelected: selectedPreferences.contains(preference)) {
                         if selectedPreferences.contains(preference) {
                             selectedPreferences.remove(preference)
                         } else {
@@ -127,21 +190,21 @@ struct OnboardingView: View {
                 }
             }
 
-            Button("Show court map") {
-                store.filters.outdoor = selectedPreferences.contains("Outdoor")
-                store.filters.indoor = selectedPreferences.contains("Indoor")
-                store.filters.free = selectedPreferences.contains("Free")
-                store.filters.lights = selectedPreferences.contains("Lights")
-                store.filters.dryAfterRain = selectedPreferences.contains("Dry after rain")
-                store.filters.nets = selectedPreferences.contains("Nets")
-                store.filters.standardRim = selectedPreferences.contains("Standard rim")
-                store.filters.solo = selectedPreferences.contains("Solo shooting")
+            Button(store.copy(.showCourtMap)) {
+                store.filters.outdoor = selectedPreferences.contains(.outdoor)
+                store.filters.indoor = selectedPreferences.contains(.indoor)
+                store.filters.free = selectedPreferences.contains(.free)
+                store.filters.lights = selectedPreferences.contains(.lights)
+                store.filters.dryAfterRain = selectedPreferences.contains(.dryAfterRain)
+                store.filters.nets = selectedPreferences.contains(.nets)
+                store.filters.standardRim = selectedPreferences.contains(.standardRim)
+                store.filters.solo = selectedPreferences.contains(.soloShooting)
                 store.completeOnboarding()
             }
             .buttonStyle(DarkPrimaryButtonStyle())
             .padding(.top, 8)
 
-            Button("Skip filters") {
+            Button(store.copy(.skipFilters)) {
                 store.completeOnboarding()
             }
             .buttonStyle(DarkSecondaryButtonStyle())
@@ -150,6 +213,95 @@ struct OnboardingView: View {
         .padding(.horizontal, 24)
         .safeAreaPadding(.top, 32)
         .safeAreaPadding(.bottom, 30)
+    }
+
+    private var brandPill: some View {
+        HStack {
+            HStack(spacing: 8) {
+                Image(systemName: "basketball.fill")
+                    .foregroundStyle(HLColor.basketballOrange)
+                Text("HoopLife")
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(.white)
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 44)
+            .background(.black.opacity(0.28))
+            .clipShape(Capsule())
+            .overlay {
+                Capsule().stroke(.white.opacity(0.12), lineWidth: 1)
+            }
+
+            Spacer()
+        }
+    }
+}
+
+private enum OnboardingStep {
+    case language
+    case intro
+    case preferences
+}
+
+private enum OnboardingPreference: String, CaseIterable {
+    case outdoor
+    case indoor
+    case free
+    case lights
+    case dryAfterRain
+    case nets
+    case standardRim
+    case soloShooting
+    case pickup
+
+    func title(_ language: AppLanguage) -> String {
+        switch self {
+        case .outdoor: HLCopy.outdoor.text(language)
+        case .indoor: HLCopy.indoor.text(language)
+        case .free: HLCopy.free.text(language)
+        case .lights: HLCopy.lights.text(language)
+        case .dryAfterRain: HLCopy.dryAfterRain.text(language)
+        case .nets: HLCopy.nets.text(language)
+        case .standardRim: HLCopy.standardRim.text(language)
+        case .soloShooting: HLCopy.soloShooting.text(language)
+        case .pickup: HLCopy.pickup.text(language)
+        }
+    }
+}
+
+struct IntroFeatureRow: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.headline.weight(.black))
+                .foregroundStyle(HLColor.night)
+                .frame(width: 38, height: 38)
+                .background(HLColor.freshGreen)
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.headline.weight(.black))
+                    .foregroundStyle(.white)
+                Text(subtitle)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white.opacity(0.66))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .background(.black.opacity(0.26))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(.white.opacity(0.13), lineWidth: 1)
+        }
     }
 }
 

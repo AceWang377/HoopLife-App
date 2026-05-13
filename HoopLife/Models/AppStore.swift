@@ -7,6 +7,7 @@ final class AppStore: ObservableObject {
     @Published var filters = CourtFilters()
     @Published var selectedCourt: Court?
     @Published var savedCourtIDs: Set<String>
+    @Published var appLanguage: AppLanguage
     #if DEBUG
     @Published var suggestions: [CourtSuggestion] = []
     @Published var courtCandidates: [CourtCandidate] = []
@@ -18,6 +19,7 @@ final class AppStore: ObservableObject {
 
     private let savedKey = "hooplife.savedCourts"
     private let onboardingKey = "hooplife.hasCompletedOnboarding"
+    private let languageKey = "hooplife.appLanguage"
     #if DEBUG
     private let courtsKey = "hooplife.courts.override"
     private let adminKey = "hooplife.adminUnlocked"
@@ -32,6 +34,8 @@ final class AppStore: ObservableObject {
         #else
         self.courts = courts
         #endif
+        let storedLanguage = UserDefaults.standard.string(forKey: languageKey).flatMap(AppLanguage.init(rawValue:))
+        self.appLanguage = storedLanguage ?? AppLanguage.preferred
         self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: onboardingKey)
         let saved = UserDefaults.standard.stringArray(forKey: savedKey) ?? []
         self.savedCourtIDs = Set(saved)
@@ -48,6 +52,11 @@ final class AppStore: ObservableObject {
     func completeOnboarding() {
         hasCompletedOnboarding = true
         UserDefaults.standard.set(true, forKey: onboardingKey)
+    }
+
+    func setLanguage(_ language: AppLanguage) {
+        appLanguage = language
+        UserDefaults.standard.set(language.rawValue, forKey: languageKey)
     }
 
     func toggleSaved(_ court: Court) {

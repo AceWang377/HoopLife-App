@@ -9,32 +9,32 @@ struct FilterSheetView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Filters")
+                        Text(store.copy(.filters))
                             .font(.system(size: 36, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
-                        Text("Choose the court facts that matter.")
+                        Text(store.copy(.filterSubtitle))
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(.white.opacity(0.66))
                     }
 
-                    filterSection("Court type") {
-                        SelectableChip(label: "Outdoor", isSelected: store.filters.outdoor) { store.filters.outdoor.toggle() }
-                        SelectableChip(label: "Indoor", isSelected: store.filters.indoor) { store.filters.indoor.toggle() }
+                    filterSection(store.copy(.courtType)) {
+                        SelectableChip(label: store.copy(.outdoor), isSelected: store.filters.outdoor) { store.filters.outdoor.toggle() }
+                        SelectableChip(label: store.copy(.indoor), isSelected: store.filters.indoor) { store.filters.indoor.toggle() }
                     }
 
-                    filterSection("Conditions") {
-                        SelectableChip(label: "Dry after rain", isSelected: store.filters.dryAfterRain) { store.filters.dryAfterRain.toggle() }
-                        SelectableChip(label: "Lights", isSelected: store.filters.lights) { store.filters.lights.toggle() }
+                    filterSection(store.copy(.conditions)) {
+                        SelectableChip(label: store.copy(.dryAfterRain), isSelected: store.filters.dryAfterRain) { store.filters.dryAfterRain.toggle() }
+                        SelectableChip(label: store.copy(.lights), isSelected: store.filters.lights) { store.filters.lights.toggle() }
                     }
 
-                    filterSection("Rim and hoop") {
-                        SelectableChip(label: "Nets", isSelected: store.filters.nets) { store.filters.nets.toggle() }
-                        SelectableChip(label: "Standard rim", isSelected: store.filters.standardRim) { store.filters.standardRim.toggle() }
+                    filterSection(store.copy(.rimAndHoop)) {
+                        SelectableChip(label: store.copy(.nets), isSelected: store.filters.nets) { store.filters.nets.toggle() }
+                        SelectableChip(label: store.copy(.standardRim), isSelected: store.filters.standardRim) { store.filters.standardRim.toggle() }
                     }
 
-                    filterSection("Use") {
-                        SelectableChip(label: "Free", isSelected: store.filters.free) { store.filters.free.toggle() }
-                        SelectableChip(label: "Solo shooting", isSelected: store.filters.solo) { store.filters.solo.toggle() }
+                    filterSection(store.copy(.use)) {
+                        SelectableChip(label: store.copy(.free), isSelected: store.filters.free) { store.filters.free.toggle() }
+                        SelectableChip(label: store.copy(.soloShooting), isSelected: store.filters.solo) { store.filters.solo.toggle() }
                     }
                 }
                 .padding(24)
@@ -44,19 +44,19 @@ struct FilterSheetView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Reset") {
+                    Button(store.copy(.reset)) {
                         store.filters = CourtFilters()
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+                    Button(store.copy(.done)) {
                         dismiss()
                     }
                     .fontWeight(.semibold)
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                Button("Apply filters  ·  \(store.filteredCourts.count) courts") {
+                Button("\(store.copy(.applyFilters))  ·  \(store.filteredCourts.count) \(store.copy(.courts))") {
                     dismiss()
                 }
                 .buttonStyle(PrimaryButtonStyle())
