@@ -1,6 +1,8 @@
 # Supabase OSM CSV Import
 
-Use `scripts/osm_geojson_to_supabase_csv.mjs` to convert an Overpass Turbo GeoJSON export into a Supabase-ready CSV.
+Use `scripts/osm_geojson_to_supabase_csv.mjs` to convert an Overpass Turbo or Geofabrik/osmium GeoJSON export into a Supabase-ready CSV.
+
+For large country imports, prefer `scripts/osm_country_import_pipeline.mjs`. It automates download, local OSM filtering, CSV conversion, and optionally staging + merge.
 
 ## 1. Export From Overpass Turbo
 
@@ -34,6 +36,34 @@ node scripts/osm_geojson_to_supabase_csv.mjs \
 ```
 
 Use `--named-only` if you want to skip OSM features without a `name` tag.
+Use `--name-style place-postcode` if you want names like `[place] basketball court · [postcode]`.
+
+## 2A. Automated Country Pipeline
+
+Generate a cleaned France CSV without touching Supabase:
+
+```bash
+node scripts/osm_country_import_pipeline.mjs \
+  --country FR \
+  --name "France" \
+  --geofabrik-url "https://download.geofabrik.de/europe/france-latest.osm.pbf" \
+  --batch 2026-05-13
+```
+
+If you have a Postgres connection string and `psql` installed, the same pipeline can safely import into staging and merge only new courts:
+
+```bash
+export SUPABASE_DATABASE_URL='postgresql://...'
+
+node scripts/osm_country_import_pipeline.mjs \
+  --country FR \
+  --name "France" \
+  --geofabrik-url "https://download.geofabrik.de/europe/france-latest.osm.pbf" \
+  --batch 2026-05-13 \
+  --apply
+```
+
+The dashboard schema URL is not a database URL. In Supabase, use Project Settings → Database → Connection string.
 
 ## 3. Supabase Table Shape
 
@@ -78,7 +108,7 @@ The script also outputs HoopLife manual-fact columns such as `dryness_after_rain
 
 1. Export OSM GeoJSON for one city.
 2. Convert to CSV.
-3. Import into Supabase staging table, such as `courts_import_staging`.
+3. Import into `public.courts_osm_import_staging`.
 4. Inspect noisy rows and duplicates.
-5. Move approved imported rows into `courts`.
+5. Run `supabase/osm_country_import_merge.sql` to safely insert only new rows into `public.courts`.
 6. In the app, show `imported` records clearly as needing HoopLife review.

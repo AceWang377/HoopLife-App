@@ -74,6 +74,7 @@ const fallbackArea = args.area || DEFAULT_AREA;
 const countryCode = args.country || DEFAULT_COUNTRY_CODE;
 const importBatch = args.batch || new Date().toISOString().slice(0, 10);
 const includeUnnamed = args.includeUnnamed ?? true;
+const nameStyle = args.nameStyle || "default";
 
 const featureCollection = JSON.parse(fs.readFileSync(inputPath, "utf8"));
 const features = Array.isArray(featureCollection.features) ? featureCollection.features : [];
@@ -82,7 +83,7 @@ const seenCoordinates = new Set();
 const rows = [];
 
 for (const feature of features) {
-  const row = featureToCourtRow(feature, { city, fallbackArea, countryCode, importBatch, includeUnnamed });
+  const row = featureToCourtRow(feature, { city, fallbackArea, countryCode, importBatch, includeUnnamed, nameStyle });
   if (!row) continue;
 
   const coordinateKey = `${Number(row.latitude).toFixed(6)},${Number(row.longitude).toFixed(6)}`;
@@ -134,7 +135,7 @@ function featureToCourtRow(feature, options) {
 
   return {
     id,
-    name: nameFromOSM || fallbackName(properties, osmType, osmId),
+    name: formatCourtName(properties, nameFromOSM, options.nameStyle, osmType, osmId),
     area: inferArea(properties, options.fallbackArea),
     city: clean(properties["addr:city"]) || options.city,
     country_code: clean(properties["addr:country"]) || options.countryCode,
@@ -200,6 +201,7 @@ function parseArgs(rawArgs) {
     else if (arg === "--area") parsed.area = rawArgs[++index];
     else if (arg === "--country") parsed.country = rawArgs[++index];
     else if (arg === "--batch") parsed.batch = rawArgs[++index];
+    else if (arg === "--name-style") parsed.nameStyle = rawArgs[++index];
     else if (arg === "--named-only") parsed.includeUnnamed = false;
     else if (!parsed.input) parsed.input = arg;
     else if (!parsed.output) parsed.output = arg;
@@ -219,6 +221,7 @@ Options:
   --area            Default area when OSM suburb/neighbourhood is missing. Default: ${DEFAULT_AREA}
   --country         ISO country code for imported rows. Default: ${DEFAULT_COUNTRY_CODE}
   --batch           Import batch label/date. Default: today
+  --name-style      default or place-postcode. Default: default
   --named-only      Skip OSM features without a name
 `);
 }
@@ -301,6 +304,26 @@ function fallbackName(properties, osmType, osmId) {
 
   if (osmType && osmId) return `Basketball court (${osmType}/${osmId})`;
   return "Basketball court";
+}
+
+function formatCourtName(properties, nameFromOSM, nameStyle, osmType, osmId) {
+  if (nameStyle !== "place-postcode") {
+    return nameFromOSM || fallbackName(properties, osmType, osmId);
+  }
+
+  const place = clean(nameFromOSM) ||
+    clean(properties.operator) ||
+    clean(properties["addr:street"]) ||
+    clean(properties["addr:neighbourhood"]) ||
+    clean(properties["addr:suburb"]);
+
+  const postcode = clean(properties["addr:postcode"]);
+
+  if (place && postcode) return `${place} basketball court · ${postcode}`;
+  if (place) return `${place} basketball court`;
+  if (postcode) return `Basketball court · ${postcode}`;
+
+  return fallbackName(properties, osmType, osmId);
 }
 
 function inferArea(properties, fallbackArea) {

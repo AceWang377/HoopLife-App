@@ -68,6 +68,37 @@ For large countries such as France, Germany, Spain, and Italy, Overpass Turbo ca
 
 Use this when a country-wide Overpass query returns too few records or times out.
 
+#### Recommended: HoopLife Pipeline Script
+
+The pipeline script runs the repetitive download, filter, export, and CSV conversion steps for you.
+By default it only creates the cleaned CSV and does not touch Supabase.
+
+```bash
+node scripts/osm_country_import_pipeline.mjs \
+  --country FR \
+  --name "France" \
+  --geofabrik-url "https://download.geofabrik.de/europe/france-latest.osm.pbf" \
+  --batch 2026-05-13
+```
+
+If `SUPABASE_DATABASE_URL` is set and PostgreSQL `psql` is installed, add `--apply` to recreate the staging table, copy the CSV into staging, and safely merge new courts into `public.courts`:
+
+```bash
+export SUPABASE_DATABASE_URL='postgresql://...'
+
+node scripts/osm_country_import_pipeline.mjs \
+  --country FR \
+  --name "France" \
+  --geofabrik-url "https://download.geofabrik.de/europe/france-latest.osm.pbf" \
+  --batch 2026-05-13 \
+  --apply
+```
+
+The automated merge does not delete or overwrite existing rows in `public.courts`.
+It skips existing stable OSM ids and courts within 12 metres of an existing court in the same country.
+
+#### Manual Commands
+
 1. Install `osmium-tool`:
 
 ```bash
@@ -114,7 +145,8 @@ node scripts/osm_geojson_to_supabase_csv.mjs \
   --city "France" \
   --area "France" \
   --country "FR" \
-  --batch 2026-05-13
+  --batch 2026-05-13 \
+  --name-style place-postcode
 ```
 
 6. Import `france_courts_import.csv` into `public.courts_osm_import_staging`, preview, then merge.
