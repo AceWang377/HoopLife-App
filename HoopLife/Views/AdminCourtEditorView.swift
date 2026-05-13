@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreLocation
 
+#if DEBUG
 struct AdminCourtEditorView: View {
     @EnvironmentObject private var store: AppStore
     @State private var searchText = ""
@@ -252,6 +253,7 @@ struct AdminCourtFormView: View {
         return nil
     }
 }
+#endif
 
 struct CourtDraft {
     var name = ""

@@ -39,7 +39,7 @@ struct AboutDataView: View {
                         }
                     }
 
-                    SectionCard(title: "Current MVP stats") {
+                    SectionCard(title: "Current data stats") {
                         FactRow(title: "Courts", value: "\(store.courts.count)")
                         FactRow(title: "Verified", value: "\(store.courts.filter { $0.confidence == .verified || $0.confidence == .recentlyChecked }.count)")
                         FactRow(title: "Imported", value: "\(store.courts.filter { $0.confidence == .imported }.count)")

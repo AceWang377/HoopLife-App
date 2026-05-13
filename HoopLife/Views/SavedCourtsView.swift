@@ -12,7 +12,7 @@ struct SavedCourtsView: View {
                         Text("Saved courts")
                             .font(.system(size: 38, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
-                        Text("Quickly check your regular spots. Saved courts stay on this device in v1.")
+                        Text("Quickly check your regular spots. Saved courts stay on this device.")
                             .font(.body.weight(.medium))
                             .foregroundStyle(.white.opacity(0.66))
                     }
@@ -48,7 +48,7 @@ struct SavedCourtsView: View {
             Text("Save courts you want to check again.")
                 .font(.title2.weight(.black))
                 .foregroundStyle(.white)
-            Text("No account needed. Your list is local to this device for the MVP.")
+            Text("No account needed. Your list is local to this device.")
                 .foregroundStyle(.white.opacity(0.62))
         }
         .padding(22)

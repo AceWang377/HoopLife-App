@@ -252,7 +252,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = HoopLife;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HoopLife uses your location to show nearby courts and distance.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HoopLife uses your location while the app is open to center the map on nearby basketball courts. Your location is not stored.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_ImageName = HoopLifeSplashMark;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -278,7 +278,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = HoopLife;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HoopLife uses your location to show nearby courts and distance.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "HoopLife uses your location while the app is open to center the map on nearby basketball courts. Your location is not stored.";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_ImageName = HoopLifeSplashMark;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";

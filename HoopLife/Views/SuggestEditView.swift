@@ -1,5 +1,6 @@
 import SwiftUI
 
+#if DEBUG
 struct SuggestEditView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
@@ -84,3 +85,4 @@ struct SuggestEditView: View {
         }
     }
 }
+#endif

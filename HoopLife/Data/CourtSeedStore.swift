@@ -56,7 +56,7 @@ enum CourtSeedStore {
             goodForPickup: .sometimes,
             goodForTraining: .yes,
             beginnerFriendly: .yes,
-            notes: "Seed record for MVP prototyping."
+            notes: "Seed record for local fallback."
         )
     ]
 }

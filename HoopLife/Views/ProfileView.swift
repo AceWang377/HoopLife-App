@@ -2,9 +2,11 @@ import SwiftUI
 
 struct ProfileView: View {
     @EnvironmentObject private var store: AppStore
+    #if DEBUG
     @State private var passcode = ""
     @State private var adminError = false
     @State private var showingOwnerTools = false
+    #endif
 
     var body: some View {
         NavigationStack {
@@ -20,6 +22,7 @@ struct ProfileView: View {
             }
             .pageBackground()
             .navigationBarTitleDisplayMode(.inline)
+            #if DEBUG
             .sheet(isPresented: $showingOwnerTools) {
                 NavigationStack {
                     ScrollView {
@@ -39,6 +42,7 @@ struct ProfileView: View {
                     }
                 }
             }
+            #endif
         }
     }
 
@@ -47,15 +51,17 @@ struct ProfileView: View {
             Text("Profile")
                 .font(.system(size: 38, weight: .black, design: .rounded))
                 .foregroundStyle(.white)
-            Text("Browse courts without an account. Saved courts stay local to this device for the MVP.")
+            Text("Browse courts without an account. Saved courts stay on this device.")
                 .font(.body.weight(.medium))
                 .foregroundStyle(.white.opacity(0.66))
         }
+        #if DEBUG
         .contentShape(Rectangle())
         .onLongPressGesture(minimumDuration: 1.2) {
             HLHaptics.medium()
             showingOwnerTools = true
         }
+        #endif
     }
 
     private var quickStats: some View {
@@ -108,13 +114,14 @@ struct ProfileView: View {
                 .padding(14)
                 .background(.white.opacity(0.09))
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                ProfileLink(title: "Terms and privacy", subtitle: "Simple MVP terms", icon: "doc.text.fill") {
+                ProfileLink(title: "Terms and privacy", subtitle: "How HoopLife handles data", icon: "doc.text.fill") {
                     TermsView()
                 }
             }
         }
     }
 
+    #if DEBUG
     private var adminSection: some View {
         SectionCard(title: "Admin") {
             VStack(alignment: .leading, spacing: 12) {
@@ -167,6 +174,7 @@ struct ProfileView: View {
             }
         }
     }
+    #endif
 }
 
 struct StatTile: View {
@@ -237,8 +245,8 @@ struct TermsView: View {
                     .font(.system(size: 34, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
 
-                SectionCard(title: "MVP promise") {
-                    Text("HoopLife shows practical court facts without requiring a public account. Saved courts stay on this device in the current MVP.")
+                SectionCard(title: "Privacy promise") {
+                    Text("HoopLife shows practical court facts without requiring an account. Saved courts stay on this device.")
                         .foregroundStyle(.white.opacity(0.62))
                 }
 
@@ -253,7 +261,7 @@ struct TermsView: View {
                 }
 
                 SectionCard(title: "Contributions") {
-                    Text("Public user submissions are planned for a later backend version. The current build keeps browsing open and uses owner-reviewed data only.")
+                    Text("Public user submissions are not available in this release. Court records are imported or reviewed before they appear in HoopLife.")
                         .foregroundStyle(.white.opacity(0.62))
                 }
             }

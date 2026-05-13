@@ -7,24 +7,32 @@ final class AppStore: ObservableObject {
     @Published var filters = CourtFilters()
     @Published var selectedCourt: Court?
     @Published var savedCourtIDs: Set<String>
+    #if DEBUG
     @Published var suggestions: [CourtSuggestion] = []
     @Published var courtCandidates: [CourtCandidate] = []
-    @Published var hasCompletedOnboarding: Bool
     @Published var isAdminUnlocked: Bool
+    #endif
+    @Published var hasCompletedOnboarding: Bool
     @Published var courtDataSource = "Local seed"
     @Published var isLoadingRemoteCourts = false
 
     private let savedKey = "hooplife.savedCourts"
     private let onboardingKey = "hooplife.hasCompletedOnboarding"
+    #if DEBUG
     private let courtsKey = "hooplife.courts.override"
     private let adminKey = "hooplife.adminUnlocked"
     private let adminPasscode = "HOOPLIFE-ADMIN"
+    #endif
     private let supabaseCourtService = SupabaseCourtService()
 
     init(courts: [Court] = CourtSeedStore.loadCourts()) {
+        #if DEBUG
         self.courts = Self.loadPersistedCourts() ?? courts
-        self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: onboardingKey)
         self.isAdminUnlocked = UserDefaults.standard.bool(forKey: adminKey)
+        #else
+        self.courts = courts
+        #endif
+        self.hasCompletedOnboarding = UserDefaults.standard.bool(forKey: onboardingKey)
         let saved = UserDefaults.standard.stringArray(forKey: savedKey) ?? []
         self.savedCourtIDs = Set(saved)
     }
@@ -55,10 +63,6 @@ final class AppStore: ObservableObject {
         savedCourtIDs.contains(court.id)
     }
 
-    func addSuggestion(_ suggestion: CourtSuggestion) {
-        suggestions.insert(suggestion, at: 0)
-    }
-
     func loadRemoteCourts() async {
         guard !isLoadingRemoteCourts else { return }
         isLoadingRemoteCourts = true
@@ -77,6 +81,11 @@ final class AppStore: ObservableObject {
             courtDataSource = "Local seed"
             print("HoopLife Supabase court load failed: \(error)")
         }
+    }
+
+    #if DEBUG
+    func addSuggestion(_ suggestion: CourtSuggestion) {
+        suggestions.insert(suggestion, at: 0)
     }
 
     func updateCourt(_ court: Court) {
@@ -131,8 +140,10 @@ final class AppStore: ObservableObject {
         guard let data = UserDefaults.standard.data(forKey: "hooplife.courts.override") else { return nil }
         return try? JSONDecoder().decode([Court].self, from: data)
     }
+    #endif
 }
 
+#if DEBUG
 struct CourtCandidate: Identifiable, Hashable {
     let id = UUID()
     var name: String
@@ -142,3 +153,4 @@ struct CourtCandidate: Identifiable, Hashable {
     var courtType: CourtType
     var submittedAt = Date()
 }
+#endif

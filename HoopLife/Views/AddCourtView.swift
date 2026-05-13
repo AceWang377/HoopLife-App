@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 
+#if DEBUG
 struct AddCourtView: View {
     @EnvironmentObject private var store: AppStore
     @State private var cameraPosition: MapCameraPosition = .region(
@@ -127,3 +128,4 @@ struct AddCourtView: View {
         }
     }
 }
+#endif
