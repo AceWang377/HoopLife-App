@@ -57,10 +57,12 @@ node scripts/enrich_courts_postcodes.mjs \
   --input ~/Downloads/courts_export.csv \
   --output ~/Downloads/court_postcode_enrichment.csv \
   --chunk 100 \
-  --radius 500
+  --radius 500 \
+  --timeout 15000
 ```
 
 For a small test run, export only 100 rows from Supabase first and run the same command.
+The script prints batch progress while running. If a Postcodes.io batch times out, that batch is skipped so the whole run can still complete; you can retry the missing rows separately.
 
 The output CSV contains:
 

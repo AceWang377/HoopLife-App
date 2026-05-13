@@ -7,6 +7,7 @@ const DEFAULT_OUTPUT = "court_postcode_enrichment.csv";
 const DEFAULT_CHUNK_SIZE = 100;
 const DEFAULT_RADIUS = 500;
 const DEFAULT_DELAY_MS = 250;
+const DEFAULT_TIMEOUT_MS = 15000;
 
 const args = parseArgs(process.argv.slice(2));
 
@@ -20,13 +21,18 @@ const outputPath = path.resolve(args.output || DEFAULT_OUTPUT);
 const chunkSize = Number(args.chunk || DEFAULT_CHUNK_SIZE);
 const radius = Number(args.radius || DEFAULT_RADIUS);
 const delayMs = Number(args.delay || DEFAULT_DELAY_MS);
+const timeoutMs = Number(args.timeout || DEFAULT_TIMEOUT_MS);
 
 const rows = parseCSV(fs.readFileSync(inputPath, "utf8"));
 const enrichmentRows = [];
 let postcodesLookupCount = 0;
 
+const totalBatches = Math.ceil(rows.length / chunkSize);
+
 for (let index = 0; index < rows.length; index += chunkSize) {
+  const batchNumber = Math.floor(index / chunkSize) + 1;
   const batch = rows.slice(index, index + chunkSize);
+  console.log(`Batch ${batchNumber}/${totalBatches}: rows ${index + 1}-${index + batch.length}`);
   const lookups = batch.map((row) => {
     const tags = parseTags(row.osm_tags_json);
     const osmPostcode = clean(tags["addr:postcode"]);
@@ -40,7 +46,7 @@ for (let index = 0; index < rows.length; index += chunkSize) {
   });
 
   const postcodes = lookups.some(Boolean)
-    ? await fetchPostcodes(lookups)
+    ? await fetchPostcodes(lookups, { timeoutMs, batchNumber })
     : [];
 
   for (let offset = 0; offset < batch.length; offset += 1) {
@@ -97,22 +103,36 @@ console.log(`Rows enriched: ${enrichmentRows.length}`);
 console.log(`Postcodes.io lookups filled: ${postcodesLookupCount}`);
 console.log(`Output: ${outputPath}`);
 
-async function fetchPostcodes(lookups) {
+async function fetchPostcodes(lookups, { timeoutMs, batchNumber }) {
   const geolocations = lookups.map((lookup) => lookup || { longitude: 0, latitude: 0, radius: 1, limit: 1 });
-  const response = await fetch("https://api.postcodes.io/postcodes?filter=postcode,distance,admin_district,parish,region", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ geolocations })
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-  if (!response.ok) {
-    throw new Error(`Postcodes.io request failed: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch("https://api.postcodes.io/postcodes?filter=postcode,distance,admin_district,parish,region", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ geolocations }),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`${response.status} ${response.statusText}`);
+    }
+
+    const payload = await response.json();
+    if (!Array.isArray(payload.result)) return [];
+
+    return payload.result.map((entry, index) => lookups[index] ? (entry?.result || []) : []);
+  } catch (error) {
+    const message = error?.name === "AbortError"
+      ? `timed out after ${timeoutMs}ms`
+      : error.message;
+    console.warn(`Warning: batch ${batchNumber} skipped because Postcodes.io ${message}.`);
+    return lookups.map(() => []);
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const payload = await response.json();
-  if (!Array.isArray(payload.result)) return [];
-
-  return payload.result.map((entry, index) => lookups[index] ? (entry?.result || []) : []);
 }
 
 function buildSuggestedName(placeName, postcode) {
@@ -195,6 +215,7 @@ function parseArgs(rawArgs) {
     else if (arg === "--chunk") parsed.chunk = rawArgs[++index];
     else if (arg === "--radius") parsed.radius = rawArgs[++index];
     else if (arg === "--delay") parsed.delay = rawArgs[++index];
+    else if (arg === "--timeout") parsed.timeout = rawArgs[++index];
     else if (!parsed.input) parsed.input = arg;
     else if (!parsed.output) parsed.output = arg;
   }
@@ -260,5 +281,6 @@ Options:
   --chunk        Postcodes.io batch size. Default: ${DEFAULT_CHUNK_SIZE}
   --radius       Nearest postcode search radius in metres. Default: ${DEFAULT_RADIUS}
   --delay        Delay between batches in ms. Default: ${DEFAULT_DELAY_MS}
+  --timeout      Postcodes.io request timeout in ms. Default: ${DEFAULT_TIMEOUT_MS}
 `);
 }
