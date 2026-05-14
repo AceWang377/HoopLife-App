@@ -1,4 +1,4 @@
-# HoopLife Court Name + Postcode Enrichment
+# Blacktop Court Name + Postcode Enrichment
 
 Goal:
 
@@ -23,7 +23,7 @@ OpenStreetMap is the best source for real place names because the imported rows 
 
 Postcodes.io is best for filling missing UK postcodes from latitude/longitude. It should not be treated as a place-name source.
 
-Google Maps/Places can be used as a manual verification reference, but do not bulk copy Google place names/addresses into the HoopLife database.
+Google Maps/Places can be used as a manual verification reference, but do not bulk copy Google place names/addresses into the Blacktop database.
 
 ## Step 1: Export Current Supabase Courts
 

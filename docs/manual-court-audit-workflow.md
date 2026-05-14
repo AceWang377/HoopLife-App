@@ -1,4 +1,4 @@
-# HoopLife Manual Court Audit Workflow
+# Blacktop Manual Court Audit Workflow
 
 ## Goal
 
@@ -19,7 +19,7 @@ Keep v1 simple: users can browse courts without logging in, while the owner manu
    - surface type if visible
    - hoop count if visible
    - opening hours only from an official venue or council source
-5. Leave HoopLife-only quality fields as `unknown` unless manually checked in person:
+5. Leave Blacktop-only quality fields as `unknown` unless manually checked in person:
    - dries fast after rain
    - slippery when wet
    - nets
@@ -34,7 +34,7 @@ Keep v1 simple: users can browse courts without logging in, while the owner manu
    - Open `Court database editor`.
    - Use `Add verified court` for a new location, or select an existing imported court to update it.
    - Set confidence to `Imported`, `Needs check`, `Verified`, or `Recently checked`.
-7. After a good local data pass, export or copy the updated data into a backend or into `HoopLife/Resources/CourtsSeed.json` before release.
+7. After a good local data pass, export or copy the updated data into a backend or into `Blacktop/Resources/CourtsSeed.json` before release.
 
 ## Confidence Rules
 

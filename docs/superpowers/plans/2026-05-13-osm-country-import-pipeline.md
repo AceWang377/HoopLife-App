@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build a repeatable HoopLife OSM country import pipeline that cleans country data, stages it in Supabase, and safely merges only new courts into `public.courts`.
+**Goal:** Build a repeatable Blacktop OSM country import pipeline that cleans country data, stages it in Supabase, and safely merges only new courts into `public.courts`.
 
 **Architecture:** Keep data import separate from the app runtime. A Node script orchestrates download/filter/export/CSV conversion and optionally calls `psql` for staging and merge. SQL files are split into staging creation and merge so existing `public.courts` rows are never deleted.
 
@@ -29,7 +29,7 @@
 - [ ] If a Geofabrik URL is provided, download the PBF with `curl`.
 - [ ] If a PBF is available, require `osmium` and filter basketball-tagged objects locally.
 - [ ] Export filtered PBF to GeoJSON.
-- [ ] Run `scripts/osm_geojson_to_supabase_csv.mjs` to generate a HoopLife CSV.
+- [ ] Run `scripts/osm_geojson_to_supabase_csv.mjs` to generate a Blacktop CSV.
 - [ ] If no database URL is provided, stop after CSV generation and print safe manual import instructions.
 - [ ] If a database URL is provided, require `psql`, create staging, import CSV with `\copy`, and run merge SQL.
 

@@ -293,7 +293,14 @@ function fallbackName(properties, osmType, osmId) {
   const operator = clean(properties.operator);
   if (operator) return `${operator} basketball court`;
 
+  const streetAddress = [
+    clean(properties["addr:housenumber"]),
+    clean(properties["addr:street"])
+  ].filter(Boolean).join(" ");
   const postcode = clean(properties["addr:postcode"]);
+
+  if (streetAddress && postcode) return `${streetAddress} basketball court · ${postcode}`;
+  if (streetAddress) return `${streetAddress} basketball court`;
   if (postcode) return `Basketball court near ${postcode}`;
 
   const street = clean(properties["addr:street"]);
@@ -302,7 +309,6 @@ function fallbackName(properties, osmType, osmId) {
   const neighbourhood = clean(properties["addr:neighbourhood"]) || clean(properties["addr:suburb"]);
   if (neighbourhood) return `Basketball court in ${neighbourhood}`;
 
-  if (osmType && osmId) return `Basketball court (${osmType}/${osmId})`;
   return "Basketball court";
 }
 

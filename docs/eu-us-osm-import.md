@@ -1,4 +1,4 @@
-# HoopLife EU and US OSM Import Commands
+# Blacktop EU and US OSM Import Commands
 
 Run `supabase/global_court_scaling.sql` first.
 Run `supabase/osm_country_import_staging.sql` before each CSV import so the staging table is clean.
@@ -68,7 +68,7 @@ For large countries such as France, Germany, Spain, and Italy, Overpass Turbo ca
 
 Use this when a country-wide Overpass query returns too few records or times out.
 
-#### Recommended: HoopLife Pipeline Script
+#### Recommended: Blacktop Pipeline Script
 
 The pipeline script runs the repetitive download, filter, export, and CSV conversion steps for you.
 By default it only creates the cleaned CSV and does not touch Supabase.
@@ -136,7 +136,7 @@ osmium export \
   --overwrite
 ```
 
-5. Convert to HoopLife CSV:
+5. Convert to Blacktop CSV:
 
 ```bash
 node scripts/osm_geojson_to_supabase_csv.mjs \

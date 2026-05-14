@@ -2,7 +2,7 @@
 --
 -- Safe boundary:
 -- - Inserts only rows not already present by stable OSM id.
--- - Skips rows within 12 metres of an existing court in the same country.
+-- - Skips rows within 30 metres of an existing court in the same country.
 -- - Does not delete or overwrite existing public.courts rows.
 
 create extension if not exists postgis with schema extensions;
@@ -33,7 +33,7 @@ join public.courts c
  and extensions.st_dwithin(
    c.location,
    extensions.st_setsrid(extensions.st_makepoint(s.longitude, s.latitude), 4326)::extensions.geography,
-   12
+   30
  )
 where c.id <> s.id
 order by distance_m asc, s.id
@@ -90,6 +90,8 @@ inserted as (
     notes,
     photo_asset_name,
     photo_url,
+    address_line,
+    postcode,
     osm_type,
     osm_id,
     osm_ref,
@@ -140,6 +142,16 @@ inserted as (
     s.notes,
     s.photo_asset_name,
     s.photo_url,
+    nullif(btrim(concat_ws(', ',
+      nullif(btrim(concat_ws(' ',
+        nullif(btrim(coalesce(s.osm_tags_json->>'addr:housenumber', '')), ''),
+        nullif(btrim(coalesce(s.osm_tags_json->>'addr:street', '')), '')
+      )), ''),
+      nullif(btrim(coalesce(s.osm_tags_json->>'addr:suburb', '')), ''),
+      nullif(btrim(coalesce(s.osm_tags_json->>'addr:city', '')), ''),
+      nullif(btrim(coalesce(s.osm_tags_json->>'addr:postcode', '')), '')
+    )), ''),
+    nullif(btrim(coalesce(s.osm_tags_json->>'addr:postcode', '')), ''),
     s.osm_type,
     s.osm_id,
     s.osm_ref,
@@ -159,7 +171,7 @@ inserted as (
         and extensions.st_dwithin(
           c.location,
           extensions.st_setsrid(extensions.st_makepoint(s.longitude, s.latitude), 4326)::extensions.geography,
-          12
+          30
         )
     )
   returning country_code
@@ -177,3 +189,6 @@ select
 from public.courts
 group by country_code
 order by country_code;
+
+-- Keep app country pins/profile totals fast after a large import.
+refresh materialized view public.court_country_summary_cache;

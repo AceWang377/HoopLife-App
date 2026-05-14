@@ -1,6 +1,6 @@
-# HoopLife OSM Court Import Workflow
+# Blacktop OSM Court Import Workflow
 
-HoopLife should treat OpenStreetMap as a starting point, not as verified truth. Imported courts can appear as `Imported` or `Needs check`; user-submitted courts should remain candidates until reviewed.
+Blacktop should treat OpenStreetMap as a starting point, not as verified truth. Imported courts can appear as `Imported` or `Needs check`; user-submitted courts should remain candidates until reviewed.
 
 ## 1. Find Basketball-Related Places
 
@@ -22,7 +22,7 @@ out center tags;
 
 For other cities, replace the area name. For a tighter first pass, use a bounding box around the area you personally want to verify.
 
-## 2. Convert OSM Records Into HoopLife Seed Fields
+## 2. Convert OSM Records Into Blacktop Seed Fields
 
 For each record:
 
@@ -35,7 +35,7 @@ For each record:
 - `sourceLicense`: `ODbL - OpenStreetMap contributors`
 - `confidence`: `imported`
 
-Leave HoopLife-specific facts as `unknown` until reviewed:
+Leave Blacktop-specific facts as `unknown` until reviewed:
 
 - rain/dryness
 - slippery surface

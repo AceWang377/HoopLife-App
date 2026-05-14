@@ -1,6 +1,6 @@
-# HoopLife Release Checklist
+# Blacktop Release Checklist
 
-Last updated: May 13, 2026
+Last updated: May 14, 2026
 
 ## Completed In This Prep Pass
 
@@ -12,15 +12,16 @@ Last updated: May 13, 2026
 - Location permission text is release-ready.
 - Supabase `public.courts` has RLS enabled.
 - Supabase `anon` and `authenticated` table grants are read-only SELECT.
-- Supabase security advisor returned no lints.
+- Supabase public app access is read-only. Advisor still reports non-blocking notes for private import tables without public policies and the public country summary cache.
 - App Store metadata draft created.
 - Privacy policy draft created.
 - Terms of use draft created.
+- Privacy policy URL, support URL, and terms URL are hosted and reachable.
+- Release build and local archive checks pass.
+- Supabase public read endpoints for country summaries and viewport court loading respond successfully.
 
 ## Before App Store Submission
 
-- Host the privacy policy at a public URL.
-- Host a public support page or contact page.
 - Add the privacy policy URL and support URL in App Store Connect.
 - Capture iPhone 6.9-inch screenshots.
 - Capture iPad 13-inch screenshots.

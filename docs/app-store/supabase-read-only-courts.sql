@@ -1,4 +1,4 @@
--- HoopLife read-only public court data policy.
+-- Blacktop read-only public court data policy.
 -- Applied to Supabase project mcvqmgzsklltrikuuigh on May 13, 2026.
 -- Keep this file as the release record for the App Store 1.0 data access model.
 

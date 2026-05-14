@@ -1,4 +1,4 @@
-# HoopLife Supabase Import
+# Blacktop Supabase Import
 
 ## Files
 
@@ -26,4 +26,4 @@ All imported rows use:
 
 Do not mark OSM rows as `verified` until you manually check them.
 
-The table is publicly readable, but write access is not enabled. That fits the current HoopLife v1 plan: no login needed for browsing, no public user submissions yet.
+The table is publicly readable, but write access is not enabled. That fits the current Blacktop v1 plan: no login needed for browsing, no public user submissions yet.

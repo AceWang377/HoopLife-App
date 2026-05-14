@@ -74,7 +74,7 @@ if (args.help || !args.country || !args.name) {
 const country = args.country.toUpperCase();
 const countryName = args.name;
 const batch = args.batch || new Date().toISOString().slice(0, 10);
-const workdir = path.resolve(expandHome(args.workdir || path.join(os.homedir(), "Downloads", `hooplife-${country.toLowerCase()}-osm`)));
+const workdir = path.resolve(expandHome(args.workdir || path.join(os.homedir(), "Downloads", `blacktop-${country.toLowerCase()}-osm`)));
 const baseName = slug(`${country}-${countryName}-${batch}`);
 const sourcePbf = path.resolve(expandHome(args.inputPbf || path.join(workdir, `${baseName}-latest.osm.pbf`)));
 const filteredPbf = path.resolve(expandHome(args.filteredPbf || path.join(workdir, `${baseName}-basketball.osm.pbf`)));
@@ -90,7 +90,7 @@ main().catch((error) => {
 async function main() {
   fs.mkdirSync(workdir, { recursive: true });
 
-  console.log(`HoopLife OSM import pipeline`);
+  console.log(`Blacktop OSM import pipeline`);
   console.log(`Country: ${countryName} (${country})`);
   console.log(`Workdir: ${workdir}`);
 
@@ -149,9 +149,9 @@ function filterBasketballPbf() {
   run("osmium", [
     "tags-filter",
     sourcePbf,
-    "n/sport=basketball",
-    "w/sport=basketball",
-    "r/sport=basketball",
+    "n/sport=*basketball*",
+    "w/sport=*basketball*",
+    "r/sport=*basketball*",
     "n/basketball=yes",
     "w/basketball=yes",
     "r/basketball=yes",
@@ -196,7 +196,7 @@ function convertGeojsonToCsv() {
     batch,
     "--name-style",
     args.nameStyle || "place-postcode"
-  ], "convert GeoJSON to HoopLife CSV");
+  ], "convert GeoJSON to Blacktop CSV");
 }
 
 function copyCsvToStaging() {
@@ -306,8 +306,8 @@ Options:
   --geofabrik-url    Geofabrik .osm.pbf URL to download
   --input-pbf        Existing local .osm.pbf file
   --input-geojson    Existing local GeoJSON file; skips osmium filtering
-  --output-csv       Output HoopLife import CSV
-  --workdir          Working directory. Default: ~/Downloads/hooplife-<country>-osm
+  --output-csv       Output Blacktop import CSV
+  --workdir          Working directory. Default: ~/Downloads/blacktop-<country>-osm
   --batch            Import batch label/date. Default: today
   --name-style       Converter naming style. Default: place-postcode
   --apply            Create staging, copy CSV, and run safe merge using psql

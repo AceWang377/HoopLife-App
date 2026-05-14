@@ -93,7 +93,7 @@ The CSV uses snake_case columns. A future `courts` table should include these co
 - `osm_tags_json`
 - `import_batch`
 
-The script also outputs HoopLife manual-fact columns such as `dryness_after_rain`, `has_nets`, `rim_height`, `rim_type`, and `court_cleanliness`. These default to `unknown` because OSM usually cannot confirm them.
+The script also outputs Blacktop manual-fact columns such as `dryness_after_rain`, `has_nets`, `rim_height`, `rim_type`, and `court_cleanliness`. These default to `unknown` because OSM usually cannot confirm them.
 
 ## 4. Import Rules
 
@@ -111,4 +111,4 @@ The script also outputs HoopLife manual-fact columns such as `dryness_after_rain
 3. Import into `public.courts_osm_import_staging`.
 4. Inspect noisy rows and duplicates.
 5. Run `supabase/osm_country_import_merge.sql` to safely insert only new rows into `public.courts`.
-6. In the app, show `imported` records clearly as needing HoopLife review.
+6. In the app, show `imported` records clearly as needing Blacktop review.

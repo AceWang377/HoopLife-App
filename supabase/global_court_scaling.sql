@@ -1,4 +1,4 @@
--- HoopLife global court scaling setup.
+-- Blacktop global court scaling setup.
 --
 -- Run this in Supabase SQL Editor before importing additional countries.
 -- It keeps the public app read-only while adding:
@@ -13,6 +13,12 @@ add column if not exists country_code text not null default 'GB';
 
 alter table public.courts
 add column if not exists location extensions.geography(Point, 4326);
+
+alter table public.courts
+add column if not exists postcode text;
+
+alter table public.courts
+add column if not exists address_line text;
 
 update public.courts
 set country_code = 'GB'
@@ -66,6 +72,19 @@ using gist (location);
 create index if not exists courts_country_city_name_idx
 on public.courts (country_code, city, name);
 
+create index if not exists courts_country_postcode_idx
+on public.courts (country_code, postcode)
+where postcode is not null and postcode <> '';
+
+drop function if exists public.courts_in_view(
+  double precision,
+  double precision,
+  double precision,
+  double precision,
+  integer,
+  text
+);
+
 create or replace function public.courts_in_view(
   min_lat double precision,
   min_lng double precision,
@@ -116,6 +135,8 @@ returns table (
   beginner_friendly text,
   notes text,
   photo_asset_name text,
+  address_line text,
+  postcode text,
   osm_ref text,
   osm_tags_json jsonb
 )
@@ -177,6 +198,8 @@ as $$
     c.beginner_friendly,
     c.notes,
     c.photo_asset_name,
+    c.address_line,
+    c.postcode,
     c.osm_ref,
     c.osm_tags_json
   from public.courts c
@@ -200,6 +223,63 @@ grant execute on function public.courts_in_view(
   text
 ) to anon, authenticated;
 
+drop function if exists public.court_country_summaries();
+drop materialized view if exists public.court_country_summary_cache;
+
+create materialized view public.court_country_summary_cache as
+with country_bounds as (
+  select
+    c.country_code,
+    count(*)::integer as court_count,
+    min(c.latitude)::double precision as min_lat,
+    min(c.longitude)::double precision as min_lng,
+    max(c.latitude)::double precision as max_lat,
+    max(c.longitude)::double precision as max_lng
+  from public.courts c
+  where c.country_code is not null
+    and c.country_code <> ''
+    and c.latitude is not null
+    and c.longitude is not null
+  group by c.country_code
+),
+dense_tiles as (
+  select distinct on (c.country_code)
+    c.country_code,
+    avg(c.latitude)::double precision as center_lat,
+    avg(c.longitude)::double precision as center_lng,
+    count(*) as tile_count
+  from public.courts c
+  where c.country_code is not null
+    and c.country_code <> ''
+    and c.latitude is not null
+    and c.longitude is not null
+  group by
+    c.country_code,
+    round(c.latitude::numeric, 1),
+    round(c.longitude::numeric, 1)
+  order by c.country_code, tile_count desc
+)
+select
+  b.country_code,
+  b.court_count,
+  d.center_lat,
+  d.center_lng,
+  b.min_lat,
+  b.min_lng,
+  b.max_lat,
+  b.max_lng
+from country_bounds b
+join dense_tiles d on d.country_code = b.country_code;
+
+create unique index if not exists court_country_summary_cache_country_idx
+on public.court_country_summary_cache (country_code);
+
+create index if not exists court_country_summary_cache_count_idx
+on public.court_country_summary_cache (court_count desc, country_code);
+
+grant select on public.court_country_summary_cache
+to anon, authenticated;
+
 create or replace function public.court_country_summaries()
 returns table (
   country_code text,
@@ -217,21 +297,16 @@ security invoker
 set search_path = public, extensions
 as $$
   select
-    c.country_code,
-    count(*)::integer as court_count,
-    avg(c.latitude)::double precision as center_lat,
-    avg(c.longitude)::double precision as center_lng,
-    min(c.latitude)::double precision as min_lat,
-    min(c.longitude)::double precision as min_lng,
-    max(c.latitude)::double precision as max_lat,
-    max(c.longitude)::double precision as max_lng
-  from public.courts c
-  where c.country_code is not null
-    and c.country_code <> ''
-    and c.latitude is not null
-    and c.longitude is not null
-  group by c.country_code
-  order by court_count desc, c.country_code;
+    s.country_code,
+    s.court_count,
+    s.center_lat,
+    s.center_lng,
+    s.min_lat,
+    s.min_lng,
+    s.max_lat,
+    s.max_lng
+  from public.court_country_summary_cache s
+  order by s.court_count desc, s.country_code;
 $$;
 
 grant execute on function public.court_country_summaries()
